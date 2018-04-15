@@ -1,0 +1,72 @@
+{
+	"op": "loadWithProxy",
+	"url": "https://www.example.com",
+	"proxy": {
+		"type": "http/sockets",
+		"ip": "127.0.0.1",
+		"port": 8888
+	}
+}
+
+{
+	"op": "load"
+	"url": "https://www.example.com"
+}
+
+{
+	"op": "captcha"
+	"selector": "img[src=VerifyImageServlet]"
+}
+{
+	"code": "200"
+	"desc": "success"
+	"data": "base64Image"
+}
+
+{
+	"op": "getCookie"
+}
+{
+	"code": "1"
+	"desc": "success"
+	"data": [{
+		"name": "JSESSION"
+		"value": "..."
+	},{
+		"name": "JSESSION"
+		"value": "..."
+	}]
+}
+
+{
+	"op": "clearCookie",
+}
+{
+	"code": "1"
+	"desc": "success"
+	"data": true
+}
+
+{
+	"op": "setCookie"
+	"cookies": [{
+		"name": "JSESSION"
+		"value": "..."
+	}]
+}
+{
+	"code": "1"
+	"desc": "success"
+	"data": true
+}
+
+
+{
+	"op": "execJavaScript"
+	"data": "js"
+}
+{
+	"code": "1"
+	"desc": "success"
+	"data": "string"
+}
