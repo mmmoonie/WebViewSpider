@@ -17,12 +17,13 @@ NetWorkAccessManager::~NetWorkAccessManager()
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
     QString url = request.url().toString();
-    if(url.contains(QRegExp(".*(png|gif|jpg).*")))
-    {
-        QNetworkRequest req;
-        req.setUrl(QUrl(""));
-        return QNetworkAccessManager::createRequest(op, req, outgoingData);
-    }
+    qDebug() << url;
+//    if(url.contains(QRegExp(".*(png|gif|jpg).*")))
+//    {
+//        QNetworkRequest req;
+//        req.setUrl(QUrl(""));
+//        return QNetworkAccessManager::createRequest(op, req, outgoingData);
+//    }
     QSslConfiguration sslConfig = request.sslConfiguration();
     sslConfig.setProtocol(QSsl::AnyProtocol);
     sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);

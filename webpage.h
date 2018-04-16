@@ -12,6 +12,7 @@ public:
     explicit WebPage(QObject *parent = 0);
     ~WebPage();
     NetWorkAccessManager * getNetworkAccessManager();
+    QString userAgentForUrl(const QUrl &url) const;
 
 signals:
 

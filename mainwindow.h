@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QNetworkDiskCache>
+#include <QLocalSocket>
+#include <QJsonObject>
 #include "webview.h"
 
 namespace Ui {
@@ -14,14 +15,20 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QString serverName, QWidget *parent = 0);
     ~MainWindow();
+    void on_localSocket_readyRead();
+    void on_webView_loadFinished();
+
+public slots:
+
 
 private:
     Ui::MainWindow *ui;
     WebView * webView;
-    QNetworkDiskCache * cache;
-    int step = 1;
+    QLocalSocket * localSocket;
+    void writeToServer(QJsonObject &json);
+    void getCookie(QJsonObject &json);
 
 };
 

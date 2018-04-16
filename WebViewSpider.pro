@@ -15,7 +15,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
+    mainwindow.cpp \
     webview.cpp \
     webpage.cpp \
     networkaccessmanager.cpp \

@@ -2,15 +2,25 @@
 	"op": "loadWithProxy",
 	"url": "https://www.example.com",
 	"proxy": {
-		"type": "http/sockets",
+		"type": "http/socks",
 		"ip": "127.0.0.1",
 		"port": 8888
 	}
+}
+{
+	"code": "200"
+	"desc": "success"
+	"data": ""
 }
 
 {
 	"op": "load"
 	"url": "https://www.example.com"
+}
+{
+	"code": "200"
+	"desc": "success"
+	"data": ""
 }
 
 {
