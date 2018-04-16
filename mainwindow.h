@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QLocalSocket>
 #include <QJsonObject>
+#include <QJsonArray>
 #include "webview.h"
 
 namespace Ui {
@@ -27,8 +28,11 @@ private:
     Ui::MainWindow *ui;
     WebView * webView;
     QLocalSocket * localSocket;
+    QString currentOp;
     void writeToServer(QJsonObject &json);
     void getCookie(QJsonObject &json);
+    void setCookie(QJsonObject &json, QJsonArray &cookieArray);
+    void captcha(const QString &selector, QJsonObject &json);
 
 };
 

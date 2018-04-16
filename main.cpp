@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
         serverName = args[1];
     }
     MainWindow w(serverName);
-    w.showMaximized();
-//    w.show();
+//    w.showMaximized();
+    w.show();
 
     return app.exec();
 }

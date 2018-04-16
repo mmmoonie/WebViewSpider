@@ -4,7 +4,6 @@
 #include <QWebFrame>
 #include <QVariant>
 #include <QDebug>
-#include <QInputDialog>
 #include <QNetworkCookieJar>
 #include <QNetworkCookie>
 #include <QWebElement>
@@ -17,7 +16,7 @@
 #include <QTimer>
 #include <QJsonParseError>
 #include <QJsonDocument>
-#include <QJsonArray>
+#include <QBuffer>
 #include "cookiejar.h"
 
 MainWindow::MainWindow(QString serverName, QWidget *parent) :
@@ -55,16 +54,19 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
             else
             {
                 QJsonObject loadJson = loadJsonDoc.object();
-                QString op = loadJson.value("op").toString();
+                currentOp = loadJson.value("op").toString();
                 QUrl url;
-                if(op == "load")
+                QString interceptor;
+                if(currentOp == "load")
                 {
                     url = QUrl::fromUserInput(loadJson.value("url").toString());
+                    interceptor = loadJson.value("interceptor").toString();
                     QNetworkProxyFactory::setUseSystemConfiguration(true);
                 }
-                else if(op == "loadWithProxy")
+                else if(currentOp == "loadWithProxy")
                 {
                     url = QUrl::fromUserInput(loadJson.value("url").toString());
+                    interceptor = loadJson.value("interceptor").toString();
                     QJsonObject proxyJson = loadJson.value("proxy").toObject();
                     QString type = proxyJson.value("type").toString();
                     QString ip = proxyJson.value("ip").toString();
@@ -82,8 +84,17 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
                     proxy.setPort(port);
                     QNetworkProxy::setApplicationProxy(proxy);
                 }
+                else
+                {
+                    QJsonObject resultJsonObj;
+                    resultJsonObj.insert("code", 400);
+                    resultJsonObj.insert("desc", "first commad must be load or loadWithProxy");
+                    resultJsonObj.insert("data", QJsonValue::Null);
+                    writeToServer(resultJsonObj);
+                }
                 ui->setupUi(this);
                 webView = new WebView(this);
+                webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
                 connect(localSocket, &QLocalSocket::readyRead, this, &MainWindow::on_localSocket_readyRead);
                 connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
                 webView->load(url);
@@ -92,39 +103,6 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
             }
         }
     }
-
-
-    //    connect(webView, &QWebView::loadFinished, [=](){
-    //        if(step == 1)
-    //        {
-    //            QWebElement imgEle = webView->getWebPage()->mainFrame()->findFirstElement("img[src=VerifyImageServlet]");
-    //            QImage image(imgEle.geometry().width(), imgEle.geometry().height(), QImage::Format_ARGB32);
-    //            QPainter painter(&image);
-    //            imgEle.render(&painter);
-    //            painter.end();
-    //            image.save("../captcha.png");
-
-    //            QString captcha = QInputDialog::getText(this, "captcha", "captcha");
-    //            QString js = QString("$('input[name=username]').val('%1');")
-    //                    .append("$('input[name=password]').val('%2');")
-    //                    .append("$('input[name=imagecode]').val('%3');login_submit(loginform);")
-    //                    .arg("supermoonie").arg("wangchao123").arg(captcha);
-    //            QVariant val = webView->page()->mainFrame()->evaluateJavaScript(js);
-    //            qDebug() << val.isValid();
-    //            step = 2;
-    //        }
-    //        else if(step == 2)
-    //        {
-    //            CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
-    //            QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
-    //            for(int i = 0; i < cookieList.size(); i ++)
-    //            {
-    //                QNetworkCookie cookie = cookieList.at(i);
-    //                qDebug() << cookie.name() << cookie.value();
-    //            }
-    //        }
-    //    });
-    //    webView->load(QUrl("https://persons.shgjj.com"));
 }
 
 MainWindow::~MainWindow()
@@ -149,12 +127,55 @@ void MainWindow::on_localSocket_readyRead()
     {
         QJsonObject dataJson = jsonDoc.object();
         QJsonObject resultJsonObj;
-        QString op = dataJson.value("op").toString();
-        if(op == "getCookie")
+        currentOp = dataJson.value("op").toString();
+        if(currentOp == "load")
+        {
+            QUrl url = QUrl::fromUserInput(dataJson.value("url").toString());
+            qDebug() << url;
+            webView->load(url);
+        }
+        else if(currentOp == "getCookie")
         {
             this->getCookie(resultJsonObj);
         }
-        resultJsonObj.insert("data", QJsonValue::Null);
+        else if(currentOp == "setCookie")
+        {
+            QJsonArray cookieArray = dataJson.value("cookies").toArray();
+            this->setCookie(resultJsonObj, cookieArray);
+        }
+        else if(currentOp == "captcha")
+        {
+            QString selector = dataJson.value("selector").toString();
+            this->captcha(selector, resultJsonObj);
+        }
+        else if(currentOp == "exec")
+        {
+            QString js = dataJson.value("js").toString();
+            QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(js);
+            if(val.isNull() || val.isValid())
+            {
+                resultJsonObj.insert("code", 200);
+                resultJsonObj.insert("desc", "null or undefined");
+                resultJsonObj.insert("data", QJsonValue::Null);
+            }
+            else
+            {
+                resultJsonObj.insert("code", 200);
+                resultJsonObj.insert("desc", "null or undefined");
+                resultJsonObj.insert("data", val.toString());
+            }
+        }
+        else if(currentOp == "execToRedirect")
+        {
+            QString js = dataJson.value("js").toString();
+            webView->getWebPage()->mainFrame()->evaluateJavaScript(js);
+        }
+        else
+        {
+            resultJsonObj.insert("code", 400);
+            resultJsonObj.insert("desc", "unknow command");
+            resultJsonObj.insert("data", QJsonValue::Null);
+        }
         writeToServer(resultJsonObj);
     }
 }
@@ -182,6 +203,7 @@ void MainWindow::getCookie(QJsonObject &json)
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
     QJsonArray cookieArray;
     QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
+    qDebug() << cookieList.size();
     for(int i = 0; i < cookieList.size(); i ++)
     {
         QNetworkCookie cookie = cookieList.at(i);
@@ -194,4 +216,60 @@ void MainWindow::getCookie(QJsonObject &json)
     json.insert("code", 200);
     json.insert("desc", "success");
     json.insert("data", QJsonValue(cookieArray));
+}
+
+void MainWindow::setCookie(QJsonObject &json, QJsonArray &cookieArray)
+{
+    CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
+    QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
+    for(int i = 0; i < cookieArray.size(); i ++)
+    {
+        QJsonObject cookieObj = cookieArray.at(i).toObject();
+        const QString name = cookieObj.value("name").toString();
+        const QString value = cookieObj.value("value").toString();
+        for(int j = 0; j < cookieList.size(); j ++)
+        {
+            QNetworkCookie originalCookie = cookieList.at(j);
+            if(QString(originalCookie.name()) == name)
+            {
+                originalCookie.setValue(value.toUtf8());
+                cookieJar->updateCookie(originalCookie);
+            }
+        }
+    }
+    json.insert("code", 200);
+    json.insert("desc", "success");
+    json.insert("data", QJsonValue::Null);
+}
+
+void MainWindow::captcha(const QString &selector, QJsonObject &json)
+{
+    if(selector.isEmpty())
+    {
+        json.insert("code", 400);
+        json.insert("desc", "selector is empty");
+        json.insert("data", QJsonValue::Null);
+        return;
+    }
+    QWebElement imgEle = webView->getWebPage()->mainFrame()->findFirstElement(selector);
+    if(imgEle.isNull())
+    {
+        json.insert("code", 400);
+        json.insert("desc", "not find");
+        json.insert("data", QJsonValue::Null);
+        return;
+    }
+    QImage image(imgEle.geometry().width(), imgEle.geometry().height(), QImage::Format_ARGB32);
+    QPainter painter(&image);
+    imgEle.render(&painter);
+    painter.end();
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    QByteArray hexed = bytes.toBase64();
+    buffer.close();
+    json.insert("code", 200);
+    json.insert("desc", "success");
+    json.insert("data", QString(hexed));
 }

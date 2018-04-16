@@ -14,6 +14,7 @@ public:
     explicit NetWorkAccessManager(QObject *parent = 0);
     ~NetWorkAccessManager();
     CookieJar * getCookieJar();
+    void setInterceptor(QString &interceptor);
 
 signals:
 
@@ -21,6 +22,7 @@ public slots:
 
 private:
     CookieJar * cookieJar;
+    QString interceptor;
 
 protected:
     QNetworkReply * createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData);

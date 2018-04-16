@@ -1,5 +1,6 @@
 {
 	"op": "loadWithProxy",
+	"interceptor": "",
 	"url": "https://www.example.com",
 	"proxy": {
 		"type": "http/socks",
@@ -14,7 +15,8 @@
 }
 
 {
-	"op": "load"
+	"op": "load",
+	"interceptor": "",
 	"url": "https://www.example.com"
 }
 {
@@ -49,15 +51,6 @@
 }
 
 {
-	"op": "clearCookie",
-}
-{
-	"code": "1"
-	"desc": "success"
-	"data": true
-}
-
-{
 	"op": "setCookie"
 	"cookies": [{
 		"name": "JSESSION"
@@ -72,11 +65,21 @@
 
 
 {
-	"op": "execJavaScript"
+	"op": "exec"
 	"data": "js"
 }
 {
-	"code": "1"
+	"code": "200"
+	"desc": "success"
+	"data": "string"
+}
+
+{
+	"op": "execToRedirect"
+	"data": "js"
+}
+{
+	"code": "200"
 	"desc": "success"
 	"data": "string"
 }
