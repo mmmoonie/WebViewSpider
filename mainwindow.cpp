@@ -59,13 +59,13 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
                 QString interceptor;
                 if(currentOp == "load")
                 {
-                    url = QUrl::fromUserInput(loadJson.value("url").toString());
+                    url = QUrl::fromUserInput(loadJson.value("url").toString("about:blank"));
                     interceptor = loadJson.value("interceptor").toString();
                     QNetworkProxyFactory::setUseSystemConfiguration(true);
                 }
                 else if(currentOp == "loadWithProxy")
                 {
-                    url = QUrl::fromUserInput(loadJson.value("url").toString());
+                    url = QUrl::fromUserInput(loadJson.value("url").toString("about:blank"));
                     interceptor = loadJson.value("interceptor").toString();
                     QJsonObject proxyJson = loadJson.value("proxy").toObject();
                     QString type = proxyJson.value("type").toString();
@@ -98,7 +98,6 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
                 connect(localSocket, &QLocalSocket::readyRead, this, &MainWindow::on_localSocket_readyRead);
                 connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
                 webView->load(url);
-
                 setCentralWidget(webView);
             }
         }
@@ -130,8 +129,7 @@ void MainWindow::on_localSocket_readyRead()
         currentOp = dataJson.value("op").toString();
         if(currentOp == "load")
         {
-            QUrl url = QUrl::fromUserInput(dataJson.value("url").toString());
-            qDebug() << url;
+            QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
             webView->load(url);
         }
         else if(currentOp == "getCookie")
@@ -161,7 +159,7 @@ void MainWindow::on_localSocket_readyRead()
             else
             {
                 resultJsonObj.insert("code", 200);
-                resultJsonObj.insert("desc", "null or undefined");
+                resultJsonObj.insert("desc", "success");
                 resultJsonObj.insert("data", val.toString());
             }
         }
@@ -185,7 +183,7 @@ void MainWindow::on_webView_loadFinished()
     QJsonObject resultJsonObj;
     resultJsonObj.insert("code", 200);
     resultJsonObj.insert("desc", "success");
-    resultJsonObj.insert("data", QJsonValue::Null);
+    resultJsonObj.insert("data", webView->url().toString());
     writeToServer(resultJsonObj);
 }
 
@@ -193,7 +191,7 @@ void MainWindow::writeToServer(QJsonObject &json)
 {
     QJsonDocument resultJsonDoc;
     resultJsonDoc.setObject(json);
-    localSocket->write(resultJsonDoc.toJson());
+    localSocket->write(resultJsonDoc.toJson(QJsonDocument::Compact));
     localSocket->flush();
     localSocket->waitForBytesWritten();
 }

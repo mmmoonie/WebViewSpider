@@ -18,12 +18,12 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
 {
     QString url = request.url().toString();
     qDebug() << url;
-    if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && url.contains(QRegExp(this->interceptor)))
-    {
-        QNetworkRequest req;
-        req.setUrl(QUrl(""));
-        return QNetworkAccessManager::createRequest(op, req, outgoingData);
-    }
+//    if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && url.contains(QRegExp(this->interceptor)))
+//    {
+//        QNetworkRequest req;
+//        req.setUrl(QUrl(""));
+//        return QNetworkAccessManager::createRequest(op, req, outgoingData);
+//    }
     QSslConfiguration sslConfig = request.sslConfiguration();
     sslConfig.setProtocol(QSsl::AnyProtocol);
     sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
