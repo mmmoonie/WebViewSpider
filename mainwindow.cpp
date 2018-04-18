@@ -3,7 +3,6 @@
 #include <QUrl>
 #include <QWebFrame>
 #include <QVariant>
-#include <QDebug>
 #include <QNetworkCookieJar>
 #include <QNetworkCookie>
 #include <QWebElement>
@@ -27,7 +26,6 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
     localSocket->connectToServer(serverName, QIODevice::ReadWrite);
     if(!localSocket->waitForConnected(3000))
     {
-        QMessageBox::warning(this, "warn", QString("connect to ").append(serverName).append(" failed"));
         QTimer::singleShot(0, this, &MainWindow::close);
     }
     else
@@ -135,16 +133,19 @@ void MainWindow::on_localSocket_readyRead()
         else if(currentOp == "getCookie")
         {
             this->getCookie(resultJsonObj);
+            writeToServer(resultJsonObj);
         }
         else if(currentOp == "setCookie")
         {
             QJsonArray cookieArray = dataJson.value("cookies").toArray();
             this->setCookie(resultJsonObj, cookieArray);
+            writeToServer(resultJsonObj);
         }
         else if(currentOp == "captcha")
         {
             QString selector = dataJson.value("selector").toString();
             this->captcha(selector, resultJsonObj);
+            writeToServer(resultJsonObj);
         }
         else if(currentOp == "exec")
         {
@@ -162,6 +163,7 @@ void MainWindow::on_localSocket_readyRead()
                 resultJsonObj.insert("desc", "success");
                 resultJsonObj.insert("data", val.toString());
             }
+            writeToServer(resultJsonObj);
         }
         else if(currentOp == "execToRedirect")
         {
@@ -173,8 +175,9 @@ void MainWindow::on_localSocket_readyRead()
             resultJsonObj.insert("code", 400);
             resultJsonObj.insert("desc", "unknow command");
             resultJsonObj.insert("data", QJsonValue::Null);
+            writeToServer(resultJsonObj);
         }
-        writeToServer(resultJsonObj);
+
     }
 }
 
@@ -201,12 +204,10 @@ void MainWindow::getCookie(QJsonObject &json)
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
     QJsonArray cookieArray;
     QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
-    qDebug() << cookieList.size();
     for(int i = 0; i < cookieList.size(); i ++)
     {
         QNetworkCookie cookie = cookieList.at(i);
         QJsonObject cookieJson;
-        qDebug() << cookie.name() << cookie.value();
         cookieJson.insert("name", QString(cookie.name()));
         cookieJson.insert("value", QString(cookie.value()));
         cookieArray.append(cookieJson);
