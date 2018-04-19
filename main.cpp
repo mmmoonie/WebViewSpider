@@ -15,8 +15,11 @@ int main(int argc, char *argv[])
         serverName = args[1];
     }
     MainWindow w(serverName);
-//    w.showMaximized();
-    w.show();
+#ifdef QT_NO_DEBUG
+    w.showMinimized();
+#else
+    w.showMaximized();
+#endif
 
     return app.exec();
 }

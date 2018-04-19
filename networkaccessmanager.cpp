@@ -17,7 +17,6 @@ NetWorkAccessManager::~NetWorkAccessManager()
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
     QString url = request.url().toString();
-    qDebug() << url;
     if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && url.contains(QRegExp(this->interceptor)))
     {
         QNetworkRequest req;

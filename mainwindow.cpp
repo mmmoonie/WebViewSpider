@@ -149,9 +149,10 @@ void MainWindow::on_localSocket_readyRead()
         }
         else if(currentOp == "exec")
         {
+            QString tryCatch("try{%1}catch(err){err.toString();}");
             QString js = dataJson.value("js").toString();
-            QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(js);
-            if(val.isNull() || val.isValid())
+            QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
+            if(val.isNull() || !val.isValid())
             {
                 resultJsonObj.insert("code", 200);
                 resultJsonObj.insert("desc", "null or undefined");
@@ -161,14 +162,15 @@ void MainWindow::on_localSocket_readyRead()
             {
                 resultJsonObj.insert("code", 200);
                 resultJsonObj.insert("desc", "success");
-                resultJsonObj.insert("data", val.toString());
+                resultJsonObj.insert("data", val.toString().replace(QRegExp("[\\s\r\n]"), " "));
             }
             writeToServer(resultJsonObj);
         }
         else if(currentOp == "execToRedirect")
         {
+            QString tryCatch("try{%1}catch(err){err.toString();}");
             QString js = dataJson.value("js").toString();
-            webView->getWebPage()->mainFrame()->evaluateJavaScript(js);
+            webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
         }
         else
         {
