@@ -16,6 +16,7 @@
 #include <QJsonParseError>
 #include <QJsonDocument>
 #include <QBuffer>
+#include <QToolBar>
 #include "cookiejar.h"
 
 MainWindow::MainWindow(QString serverName, QWidget *parent) :
@@ -24,87 +25,45 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
 {
     localSocket = new QLocalSocket(this);
     localSocket->connectToServer(serverName, QIODevice::ReadWrite);
-    if(!localSocket->waitForConnected(3000))
+    if(!localSocket->waitForConnected(5000))
     {
         QTimer::singleShot(0, this, &MainWindow::close);
     }
     else
     {
-        if(!localSocket->waitForReadyRead())
-        {
-            QMessageBox::warning(this, "warn", "wait for read timeout");
-            QTimer::singleShot(0, this, &MainWindow::close);
-        }
-        else
-        {
-            QByteArray data = localSocket->readAll();
-            QJsonParseError * parseError = new QJsonParseError;
-            QJsonDocument loadJsonDoc = QJsonDocument::fromJson(data, parseError);
-            if(parseError->error != QJsonParseError::NoError || loadJsonDoc.isNull())
-            {
-                QJsonObject resultJsonObj;
-                resultJsonObj.insert("code", 400);
-                resultJsonObj.insert("desc", "parse json failed");
-                resultJsonObj.insert("data", QJsonValue::Null);
-                writeToServer(resultJsonObj);
-                QTimer::singleShot(0, this, &MainWindow::close);
-            }
-            else
-            {
-                QJsonObject loadJson = loadJsonDoc.object();
-                currentOp = loadJson.value("op").toString();
-                QUrl url;
-                QString interceptor;
-                if(currentOp == "load")
-                {
-                    url = QUrl::fromUserInput(loadJson.value("url").toString("about:blank"));
-                    interceptor = loadJson.value("interceptor").toString();
-                    QNetworkProxyFactory::setUseSystemConfiguration(true);
-                }
-                else if(currentOp == "loadWithProxy")
-                {
-                    url = QUrl::fromUserInput(loadJson.value("url").toString("about:blank"));
-                    interceptor = loadJson.value("interceptor").toString();
-                    QJsonObject proxyJson = loadJson.value("proxy").toObject();
-                    QString type = proxyJson.value("type").toString();
-                    QString ip = proxyJson.value("ip").toString();
-                    int port = proxyJson.value("port").toInt();
-                    QNetworkProxy proxy;
-                    if(type == "socks5")
-                    {
-                        proxy.setType(QNetworkProxy::Socks5Proxy);
-                    }
-                    else
-                    {
-                        proxy.setType(QNetworkProxy::HttpProxy);
-                    }
-                    proxy.setHostName(ip);
-                    proxy.setPort(port);
-                    QNetworkProxy::setApplicationProxy(proxy);
-                }
-                else
-                {
-                    QJsonObject resultJsonObj;
-                    resultJsonObj.insert("code", 400);
-                    resultJsonObj.insert("desc", "first commad must be load or loadWithProxy");
-                    resultJsonObj.insert("data", QJsonValue::Null);
-                    writeToServer(resultJsonObj);
-                }
-                ui->setupUi(this);
-                webView = new WebView(this);
-                webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
-                connect(localSocket, &QLocalSocket::readyRead, this, &MainWindow::on_localSocket_readyRead);
-                connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
-                webView->load(url);
-                setCentralWidget(webView);
-            }
-        }
+        ui->setupUi(this);
+        webView = new WebView(this);
+
+        locationEdit = new QLineEdit(this);
+        locationEdit->setSizePolicy(QSizePolicy::Expanding, locationEdit->sizePolicy().verticalPolicy());
+        connect(locationEdit, &QLineEdit::returnPressed, this, &MainWindow::on_locationEdit_returnPressed);
+
+        QToolBar *toolBar = addToolBar(tr("Navigation"));
+        toolBar->addAction(webView->pageAction(QWebPage::Back));
+        toolBar->addAction(webView->pageAction(QWebPage::Forward));
+        toolBar->addAction(webView->pageAction(QWebPage::Reload));
+        toolBar->addAction(webView->pageAction(QWebPage::Stop));
+        toolBar->addWidget(locationEdit);
+
+        connect(localSocket, &QLocalSocket::readyRead, this, &MainWindow::on_localSocket_readyRead);
+        connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
+        connect(webView, &QWebView::loadProgress, this, &MainWindow::on_webView_loadProcess);
+        connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
+        webView->load(QUrl("about:blank"));
+        setCentralWidget(webView);
     }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::on_locationEdit_returnPressed()
+{
+    QUrl url = QUrl::fromUserInput(locationEdit->text());
+    webView->load(url);
+    webView->setFocus();
 }
 
 void MainWindow::on_localSocket_readyRead()
@@ -119,72 +78,126 @@ void MainWindow::on_localSocket_readyRead()
         resultJsonObj.insert("desc", "parse json failed");
         resultJsonObj.insert("data", QJsonValue::Null);
         writeToServer(resultJsonObj);
+        return;
     }
-    else
+    QJsonObject dataJson = jsonDoc.object();
+    QJsonObject resultJsonObj;
+    currentOp = dataJson.value("op").toString("load");
+    QString currentUrl = webView->url().toString();
+    if(currentUrl == "about:blank" && currentOp != "load" && currentOp != "loadWithProxy")
     {
-        QJsonObject dataJson = jsonDoc.object();
-        QJsonObject resultJsonObj;
-        currentOp = dataJson.value("op").toString();
-        if(currentOp == "load")
+        resultJsonObj.insert("code", 400);
+        resultJsonObj.insert("desc", "first command must be load or loadWithProxy");
+        resultJsonObj.insert("data", QJsonValue::Null);
+        writeToServer(resultJsonObj);
+        return;
+    }
+    if(currentOp == "load")
+    {
+        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
+        webView->load(url);
+    }
+    else if(currentOp == "loadWithProxy")
+    {
+        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
+        QString interceptor = dataJson.value("interceptor").toString("");
+        QJsonObject proxyJson = dataJson.value("proxy").toObject();
+        QString type = proxyJson.value("type").toString();
+        QString ip = proxyJson.value("ip").toString();
+        int port = proxyJson.value("port").toInt();
+        QNetworkProxy proxy;
+        if(type == "socks5")
         {
-            QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
-            webView->load(url);
-        }
-        else if(currentOp == "getCookie")
-        {
-            this->getCookie(resultJsonObj);
-            writeToServer(resultJsonObj);
-        }
-        else if(currentOp == "setCookie")
-        {
-            QJsonArray cookieArray = dataJson.value("cookies").toArray();
-            this->setCookie(resultJsonObj, cookieArray);
-            writeToServer(resultJsonObj);
-        }
-        else if(currentOp == "captcha")
-        {
-            QString selector = dataJson.value("selector").toString();
-            this->captcha(selector, resultJsonObj);
-            writeToServer(resultJsonObj);
-        }
-        else if(currentOp == "exec")
-        {
-            QString tryCatch("try{%1}catch(err){err.toString();}");
-            QString js = dataJson.value("js").toString();
-            QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
-            if(val.isNull() || !val.isValid())
-            {
-                resultJsonObj.insert("code", 200);
-                resultJsonObj.insert("desc", "null or undefined");
-                resultJsonObj.insert("data", QJsonValue::Null);
-            }
-            else
-            {
-                resultJsonObj.insert("code", 200);
-                resultJsonObj.insert("desc", "success");
-                resultJsonObj.insert("data", val.toString().replace(QRegExp("[\\s\r\n]"), " "));
-            }
-            writeToServer(resultJsonObj);
-        }
-        else if(currentOp == "execToRedirect")
-        {
-            QString tryCatch("try{%1}catch(err){err.toString();}");
-            QString js = dataJson.value("js").toString();
-            webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
+            proxy.setType(QNetworkProxy::Socks5Proxy);
         }
         else
         {
-            resultJsonObj.insert("code", 400);
-            resultJsonObj.insert("desc", "unknow command");
-            resultJsonObj.insert("data", QJsonValue::Null);
-            writeToServer(resultJsonObj);
+            proxy.setType(QNetworkProxy::HttpProxy);
         }
-
+        proxy.setHostName(ip);
+        proxy.setPort(port);
+        QNetworkProxy::setApplicationProxy(proxy);
+        webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
+        webView->load(url);
     }
+    else if(currentOp == "getCookie")
+    {
+        this->getCookie(resultJsonObj);
+        writeToServer(resultJsonObj);
+    }
+    else if(currentOp == "setCookie")
+    {
+        QJsonArray cookieArray = dataJson.value("cookies").toArray();
+        this->setCookie(resultJsonObj, cookieArray);
+        writeToServer(resultJsonObj);
+    }
+    else if(currentOp == "captcha")
+    {
+        QString selector = dataJson.value("selector").toString();
+        this->captcha(selector, resultJsonObj);
+        writeToServer(resultJsonObj);
+    }
+    else if(currentOp == "exec")
+    {
+        QString tryCatch("try{%1}catch(err){err.toString();}");
+        QString js = dataJson.value("js").toString();
+        QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
+        if(val.isNull() || !val.isValid())
+        {
+            resultJsonObj.insert("code", 200);
+            resultJsonObj.insert("desc", "null or undefined");
+            resultJsonObj.insert("data", QJsonValue::Null);
+        }
+        else
+        {
+            resultJsonObj.insert("code", 200);
+            resultJsonObj.insert("desc", "success");
+            resultJsonObj.insert("data", val.toString().replace(QRegExp("[\\s\r\n]"), " "));
+        }
+        writeToServer(resultJsonObj);
+    }
+    else if(currentOp == "execToRedirect")
+    {
+        QString tryCatch("try{%1}catch(err){err.toString();}");
+        QString js = dataJson.value("js").toString();
+        webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
+    }
+    else
+    {
+        resultJsonObj.insert("code", 400);
+        resultJsonObj.insert("desc", "unknow command");
+        resultJsonObj.insert("data", QJsonValue::Null);
+        writeToServer(resultJsonObj);
+    }
+}
+
+void MainWindow::on_webView_loadProcess(int progress)
+{
+    this->progress = progress;
+    on_webView_titleChanged();
+}
+
+void MainWindow::on_webView_titleChanged()
+{
+    QString title = webView->title();
+    if(title == "")
+    {
+        title = webView->url().toString();
+    }
+    if (this->progress <= 0 || this->progress >= 100)
+        setWindowTitle(title);
+    else
+        setWindowTitle(QString("%1 (%2%)").arg(title).arg(this->progress));
 }
 
 void MainWindow::on_webView_loadFinished()
 {
+    QString currentUrl = webView->url().toString();
+    locationEdit->setText(currentUrl);
+    if(currentUrl == "about:blank")
+    {
+        return;
+    }
     QJsonObject resultJsonObj;
     resultJsonObj.insert("code", 200);
     resultJsonObj.insert("desc", "success");

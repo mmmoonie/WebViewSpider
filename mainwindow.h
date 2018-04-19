@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include "webview.h"
+#include <QLineEdit>
 
 namespace Ui {
 class MainWindow;
@@ -20,15 +21,20 @@ public:
     ~MainWindow();
     void on_localSocket_readyRead();
     void on_webView_loadFinished();
+    void on_locationEdit_returnPressed();
+    void on_webView_titleChanged();
+    void on_webView_loadProcess(int progress);
 
 public slots:
 
 
 private:
     Ui::MainWindow *ui;
+    QLineEdit * locationEdit;
     WebView * webView;
     QLocalSocket * localSocket;
     QString currentOp;
+    int progress = 0;
     void writeToServer(QJsonObject &json);
     void getCookie(QJsonObject &json);
     void setCookie(QJsonObject &json, QJsonArray &cookieArray);
