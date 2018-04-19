@@ -23,6 +23,7 @@ private:
 
 protected:
     void javaScriptAlert(QWebFrame * frame, const QString & msg);
+    bool javaScriptConfirm(QWebFrame * frame, const QString & msg);
 };
 
 #endif // WEBPAGE_H
