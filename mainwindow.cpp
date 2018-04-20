@@ -209,7 +209,12 @@ void MainWindow::writeToServer(QJsonObject &json)
 {
     QJsonDocument resultJsonDoc;
     resultJsonDoc.setObject(json);
-    localSocket->write(resultJsonDoc.toJson(QJsonDocument::Compact));
+    QByteArray data = resultJsonDoc.toJson(QJsonDocument::Compact);
+    int count = data.count();
+    qint64 len = localSocket->write(data);
+    while(len < count) {
+        len = len + localSocket->write(data);
+    }
     localSocket->flush();
     localSocket->waitForBytesWritten();
 }

@@ -19,7 +19,9 @@ public slots:
 
 private:
     WebPage * webPage;
+#ifdef QT_DEBUG
     QWebInspector *inspector = 0;
+#endif
 };
 
 #endif // WEBVIEW_H
