@@ -211,12 +211,11 @@ void MainWindow::writeToServer(QJsonObject &json)
     resultJsonDoc.setObject(json);
     QByteArray data = resultJsonDoc.toJson(QJsonDocument::Compact);
     int count = data.count();
-    qint64 len = localSocket->write(data);
-    while(len < count) {
-        len = len + localSocket->write(data);
+    if(count % 4096 == 0)
+    {
+        data.append(QString("\r\n\r\n"));
     }
-    localSocket->flush();
-    localSocket->waitForBytesWritten();
+    localSocket->write(data);
 }
 
 void MainWindow::getCookie(QJsonObject &json)
