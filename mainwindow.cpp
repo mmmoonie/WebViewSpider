@@ -17,6 +17,7 @@
 #include <QJsonDocument>
 #include <QBuffer>
 #include <QToolBar>
+#include <QDesktopWidget>
 #include "cookiejar.h"
 
 MainWindow::MainWindow(QString serverName, QWidget *parent) :
@@ -51,6 +52,14 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
         connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
         webView->load(QUrl("about:blank"));
         setCentralWidget(webView);
+#ifdef QT_DEBUG
+        QDesktopWidget* desktopWidget = QApplication::desktop();
+        QRect screenRect = desktopWidget->availableGeometry();
+        int width = screenRect.width();
+        int height = screenRect.height();
+        resize(width/2, height);
+        move(0, 0);
+#endif
     }
 }
 

@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 #ifdef QT_NO_DEBUG
     w.showMinimized();
 #else
-    w.showMaximized();
+    w.show();
 #endif
 
     return app.exec();
