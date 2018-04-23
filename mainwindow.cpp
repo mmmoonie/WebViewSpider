@@ -104,7 +104,7 @@ void MainWindow::on_localSocket_readyRead()
     if(currentOp == "load")
     {
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
-        webView->load(url);
+        webView->setUrl(url);
     }
     else if(currentOp == "loadWithProxy")
     {
@@ -127,7 +127,7 @@ void MainWindow::on_localSocket_readyRead()
         proxy.setPort(port);
         QNetworkProxy::setApplicationProxy(proxy);
         webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
-        webView->load(url);
+        webView->setUrl(url);
     }
     else if(currentOp == "getCookie")
     {
