@@ -219,7 +219,7 @@ void MainWindow::writeToServer(QJsonObject &json)
     QJsonDocument resultJsonDoc;
     resultJsonDoc.setObject(json);
     QByteArray data = resultJsonDoc.toJson(QJsonDocument::Compact);
-    data.append(QString("\r\n\r\n"));
+    data.append(QString("\r\n"));
     tcpSocket->write(data);
 }
 
