@@ -9,12 +9,12 @@ int main(int argc, char *argv[])
     {
         qDebug() << arg;
     }
-    QString serverName = QString("WebViewSpider");
+    int port = 7200;
     if(args.size() == 2)
     {
-        serverName = args[1];
+        port = args[1].toInt();
     }
-    MainWindow w(serverName);
+    MainWindow w(port);
 #ifdef QT_NO_DEBUG
     w.showMinimized();
 #else

@@ -20,13 +20,13 @@
 #include <QDesktopWidget>
 #include "cookiejar.h"
 
-MainWindow::MainWindow(QString serverName, QWidget *parent) :
+MainWindow::MainWindow(int port, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    localSocket = new QLocalSocket(this);
-    localSocket->connectToServer(serverName, QIODevice::ReadWrite);
-    if(!localSocket->waitForConnected(5000))
+    tcpSocket = new QTcpSocket(this);
+    tcpSocket->connectToHost(QHostAddress::LocalHost, port);
+    if(!tcpSocket->waitForConnected(5000))
     {
         QTimer::singleShot(0, this, &MainWindow::close);
     }
@@ -46,7 +46,7 @@ MainWindow::MainWindow(QString serverName, QWidget *parent) :
         toolBar->addAction(webView->pageAction(QWebPage::Stop));
         toolBar->addWidget(locationEdit);
 
-        connect(localSocket, &QLocalSocket::readyRead, this, &MainWindow::on_localSocket_readyRead);
+        connect(tcpSocket, &QTcpSocket::readyRead, this, &MainWindow::on_tcpSocket_readyRead);
         connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
         connect(webView, &QWebView::loadProgress, this, &MainWindow::on_webView_loadProcess);
         connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
@@ -75,9 +75,9 @@ void MainWindow::on_locationEdit_returnPressed()
     webView->setFocus();
 }
 
-void MainWindow::on_localSocket_readyRead()
+void MainWindow::on_tcpSocket_readyRead()
 {
-    QByteArray data = localSocket->readAll();
+    QByteArray data = tcpSocket->readAll();
     QJsonParseError * parseError = new QJsonParseError;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(data, parseError);
     if(parseError->error != QJsonParseError::NoError || jsonDoc.isNull())
@@ -219,12 +219,8 @@ void MainWindow::writeToServer(QJsonObject &json)
     QJsonDocument resultJsonDoc;
     resultJsonDoc.setObject(json);
     QByteArray data = resultJsonDoc.toJson(QJsonDocument::Compact);
-    int count = data.count();
-    if(count % 4096 == 0)
-    {
-        data.append(QString("\r\n\r\n"));
-    }
-    localSocket->write(data);
+    data.append(QString("\r\n\r\n"));
+    tcpSocket->write(data);
 }
 
 void MainWindow::getCookie(QJsonObject &json)
