@@ -39,6 +39,7 @@ private:
     void getCookie(QJsonObject &json);
     void setCookie(QJsonObject &json, QJsonArray &cookieArray);
     void captcha(const QString &selector, QJsonObject &json);
+    void printPdf(QJsonObject &json);
 
 };
 

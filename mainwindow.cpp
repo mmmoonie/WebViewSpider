@@ -18,6 +18,7 @@
 #include <QBuffer>
 #include <QToolBar>
 #include <QDesktopWidget>
+#include <QPrinter>
 #include "cookiejar.h"
 
 MainWindow::MainWindow(int port, QWidget *parent) :
@@ -105,6 +106,10 @@ void MainWindow::on_tcpSocket_readyRead()
     {
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
         webView->setUrl(url);
+        resultJsonObj.insert("code", 200);
+        resultJsonObj.insert("desc", "success");
+        resultJsonObj.insert("data", QJsonValue::Null);
+        writeToServer(resultJsonObj);
     }
     else if(currentOp == "loadWithProxy")
     {
@@ -171,6 +176,11 @@ void MainWindow::on_tcpSocket_readyRead()
         QString js = dataJson.value("js").toString();
         webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
     }
+    else if(currentOp == "printPdf")
+    {
+        this->printPdf(resultJsonObj);
+        writeToServer(resultJsonObj);
+    }
     else
     {
         resultJsonObj.insert("code", 400);
@@ -201,17 +211,17 @@ void MainWindow::on_webView_titleChanged()
 
 void MainWindow::on_webView_loadFinished()
 {
-    QString currentUrl = webView->url().toString();
-    locationEdit->setText(currentUrl);
-    if(currentUrl == "about:blank")
-    {
-        return;
-    }
-    QJsonObject resultJsonObj;
-    resultJsonObj.insert("code", 200);
-    resultJsonObj.insert("desc", "success");
-    resultJsonObj.insert("data", webView->url().toString());
-    writeToServer(resultJsonObj);
+//    QString currentUrl = webView->url().toString();
+//    locationEdit->setText(currentUrl);
+//    if(currentUrl == "about:blank")
+//    {
+//        return;
+//    }
+//    QJsonObject resultJsonObj;
+//    resultJsonObj.insert("code", 200);
+//    resultJsonObj.insert("desc", "success");
+//    resultJsonObj.insert("data", webView->url().toString());
+//    writeToServer(resultJsonObj);
 }
 
 void MainWindow::writeToServer(QJsonObject &json)
@@ -295,4 +305,16 @@ void MainWindow::captcha(const QString &selector, QJsonObject &json)
     json.insert("code", 200);
     json.insert("desc", "success");
     json.insert("data", QString(hexed));
+}
+
+void MainWindow::printPdf(QJsonObject &json)
+{
+    QPrinter printer;
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setPageSize(QPrinter::A4);
+    printer.setOutputFileName("C:/app/a.pdf");
+    webView->print(&printer);
+    json.insert("code", 200);
+    json.insert("desc", "success");
+    json.insert("data", "");
 }
