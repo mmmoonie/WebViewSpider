@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QLocalSocket>
+#include <QTcpSocket>
 #include <QJsonObject>
 #include <QJsonArray>
 #include "webview.h"
@@ -17,9 +17,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QString serverName, QWidget *parent = 0);
+    explicit MainWindow(int port, QWidget *parent = 0);
     ~MainWindow();
-    void on_localSocket_readyRead();
+    void on_tcpSocket_readyRead();
     void on_webView_loadFinished();
     void on_locationEdit_returnPressed();
     void on_webView_titleChanged();
@@ -32,7 +32,7 @@ private:
     Ui::MainWindow *ui;
     QLineEdit * locationEdit;
     WebView * webView;
-    QLocalSocket * localSocket;
+    QTcpSocket * tcpSocket;
     QString currentOp;
     int progress = 0;
     void writeToServer(QJsonObject &json);
