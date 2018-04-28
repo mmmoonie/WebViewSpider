@@ -218,15 +218,14 @@ void MainWindow::on_webView_loadFinished()
 {
     QString currentUrl = webView->url().toString();
     locationEdit->setText(currentUrl);
-    if(currentUrl == "about:blank")
+    if(currentOp == "load" || currentOp == "loadWithProxy")
     {
-        return;
+        QJsonObject resultJsonObj;
+        resultJsonObj.insert("code", 200);
+        resultJsonObj.insert("desc", "success");
+        resultJsonObj.insert("data", webView->url().toString());
+        writeToServer(resultJsonObj);
     }
-    QJsonObject resultJsonObj;
-    resultJsonObj.insert("code", 200);
-    resultJsonObj.insert("desc", "success");
-    resultJsonObj.insert("data", webView->url().toString());
-    writeToServer(resultJsonObj);
 }
 
 void MainWindow::writeToServer(QJsonObject &json)
