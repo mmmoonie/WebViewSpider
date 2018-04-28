@@ -104,12 +104,13 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     if(currentOp == "load")
     {
+        QNetworkProxyFactory::setUseSystemConfiguration(true);
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
         webView->setUrl(url);
-        resultJsonObj.insert("code", 200);
-        resultJsonObj.insert("desc", "success");
-        resultJsonObj.insert("data", QJsonValue::Null);
-        writeToServer(resultJsonObj);
+//        resultJsonObj.insert("code", 200);
+//        resultJsonObj.insert("desc", "success");
+//        resultJsonObj.insert("data", QJsonValue::Null);
+//        writeToServer(resultJsonObj);
     }
     else if(currentOp == "loadWithProxy")
     {
@@ -133,6 +134,10 @@ void MainWindow::on_tcpSocket_readyRead()
         QNetworkProxy::setApplicationProxy(proxy);
         webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
         webView->setUrl(url);
+//        resultJsonObj.insert("code", 200);
+//        resultJsonObj.insert("desc", "success");
+//        resultJsonObj.insert("data", QJsonValue::Null);
+//        writeToServer(resultJsonObj);
     }
     else if(currentOp == "getCookie")
     {
@@ -211,17 +216,17 @@ void MainWindow::on_webView_titleChanged()
 
 void MainWindow::on_webView_loadFinished()
 {
-//    QString currentUrl = webView->url().toString();
-//    locationEdit->setText(currentUrl);
-//    if(currentUrl == "about:blank")
-//    {
-//        return;
-//    }
-//    QJsonObject resultJsonObj;
-//    resultJsonObj.insert("code", 200);
-//    resultJsonObj.insert("desc", "success");
-//    resultJsonObj.insert("data", webView->url().toString());
-//    writeToServer(resultJsonObj);
+    QString currentUrl = webView->url().toString();
+    locationEdit->setText(currentUrl);
+    if(currentUrl == "about:blank")
+    {
+        return;
+    }
+    QJsonObject resultJsonObj;
+    resultJsonObj.insert("code", 200);
+    resultJsonObj.insert("desc", "success");
+    resultJsonObj.insert("data", webView->url().toString());
+    writeToServer(resultJsonObj);
 }
 
 void MainWindow::writeToServer(QJsonObject &json)
