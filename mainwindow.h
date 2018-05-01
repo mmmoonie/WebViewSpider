@@ -20,6 +20,7 @@ public:
     explicit MainWindow(int port, QWidget *parent = 0);
     ~MainWindow();
     void on_tcpSocket_readyRead();
+    void on_webView_loadStarted();
     void on_webView_loadFinished();
     void on_locationEdit_returnPressed();
     void on_webView_titleChanged();
@@ -38,7 +39,7 @@ private:
     void writeToServer(QJsonObject &json);
     void getCookie(QJsonObject &json);
     void setCookie(QJsonObject &json, QJsonArray &cookieArray);
-    void captcha(const QString &selector, QJsonObject &json);
+    void screenshot(const QString &selector, QJsonObject &json);
     void printPdf(QJsonObject &json);
 
 };
