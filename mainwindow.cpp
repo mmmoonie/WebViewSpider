@@ -36,10 +36,12 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         ui->setupUi(this);
         webView = new WebView(this);
 
+        // lineEdit
         locationEdit = new QLineEdit(this);
         locationEdit->setSizePolicy(QSizePolicy::Expanding, locationEdit->sizePolicy().verticalPolicy());
         connect(locationEdit, &QLineEdit::returnPressed, this, &MainWindow::on_locationEdit_returnPressed);
 
+        // toolBar
         QToolBar *toolBar = addToolBar(tr("Navigation"));
         toolBar->addAction(webView->pageAction(QWebPage::Back));
         toolBar->addAction(webView->pageAction(QWebPage::Forward));
@@ -53,6 +55,7 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
         webView->load(QUrl("about:blank"));
         setCentralWidget(webView);
+
 #ifdef QT_DEBUG
         QDesktopWidget* desktopWidget = QApplication::desktop();
         QRect screenRect = desktopWidget->availableGeometry();
@@ -73,7 +76,6 @@ void MainWindow::on_locationEdit_returnPressed()
 {
     QUrl url = QUrl::fromUserInput(locationEdit->text());
     webView->load(url);
-    webView->setFocus();
 }
 
 void MainWindow::on_tcpSocket_readyRead()
@@ -165,7 +167,7 @@ void MainWindow::on_tcpSocket_readyRead()
     else if(currentOp == "exec")
     {
         QString tryCatch("try{%1}catch(err){err.toString();}");
-        QString js = dataJson.value("js").toString();
+        QString js = dataJson.value("js").toString().toLocal8Bit();
         QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
         if(val.isNull() || !val.isValid())
         {
@@ -224,6 +226,7 @@ void MainWindow::on_webView_loadFinished()
     this->progress = 100;
     QString currentUrl = webView->url().toString();
     locationEdit->setText(currentUrl);
+    webView->setFocus();
 }
 
 void MainWindow::writeToServer(QJsonObject &json)
