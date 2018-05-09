@@ -7,6 +7,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 ## 命令列表
 
 - load : 加载网页（第一条命令必须为此命令）
+
   ```json
   {
   	"op": "load",
@@ -19,6 +20,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   	}
   }
   ```
+  
   interceptor : 网络拦截器，参数为正则表达式，此参数匹配的URL 都不会发起访问从而减少网络请求
 
   URL : 需要加载的URL
@@ -34,7 +36,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   	"data": "https://www.example.com"
   }
   ```
+  
   此结果会在 load 命令执行后立即返回，此时页面开始加载，code 表示执行状态（目前还未校验参数的合法性），desc 表示当前的 URL
+  
 - screenshot : dom 截图
 
   ```json
@@ -43,8 +47,11 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   	"selector": "img[src=VerifyImageServlet]"
   }
   ```
+  
   selector : dom 选择器，并对此 dom 进行截图
+  
   结果 : 
+  
   ```json
   {
   	"code": "200",
@@ -52,7 +59,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   	"data": "base64Image"
   }
   ```
+  
   data 表示 base64 编码过后的图片
+  
 - getCookie : 获取cookie 列表
 
 - setCookie : 设置cookie 列表
