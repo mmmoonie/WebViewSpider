@@ -25,7 +25,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   URL : 需要加载的URL
 
-  proxy : 代理，支持http以及socks 代理
+  proxy : 代理，支持http以及socks5 代理
 
   结果 : 
 
