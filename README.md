@@ -12,6 +12,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   {
   	"op": "load",
   	"interceptor": ".*(png|gif|jpg).*",
+      "extractor": "/VerifyImageServlet",
   	"url": "https://www.example.com",
   	"proxy": {
   		"type": "http/socks5",
@@ -21,11 +22,13 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   }
   ```
 
-  interceptor : 网络拦截器，参数为正则表达式，此参数匹配的URL 都不会发起访问从而减少网络请求
+  interceptor : （非必须）网络拦截器，参数为正则表达式，此参数匹配的 URL path 都不会发起访问从而减少网络请求
 
-  URL : 需要加载的URL
+  extractor : （非必须）网络截取器，参数为正则表达式，此参数匹配的 URL path 返回的数据都会被缓存到QMap 中，供 extract 命令获取，其中 key 为完整的 URL path
 
-  proxy : 代理，支持http以及socks5 代理
+  URL : 需要加载的 URL
+
+  proxy : （非必须）代理，支持 http 以及 socks5 代理
 
   结果 : 
 
@@ -38,6 +41,30 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   ```
 
   此结果会在 load 命令执行后立即返回，此时页面开始加载，code 表示执行状态（目前还未校验参数的合法性），data 表示当前的 URL
+
+- extract: 数据提取
+
+  ```json
+  {
+      "op", "extract",
+      "path", "/VerifyImageServlet"
+  }
+  ```
+
+  path : QMap 的 key
+
+  结果 : 
+
+  ```json
+  {
+      "code": 200,
+      "desc": "success",
+      "data": "base64Data"
+  }
+  
+  ```
+
+  data : base64 编码过后的数据
 
 - screenshot : dom 截图
 

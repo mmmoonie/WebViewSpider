@@ -5,6 +5,7 @@
 
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
+    extractMap = new QMap<QString, QByteArray>();
     cookieJar = new CookieJar(this);
     setCookieJar(cookieJar);
 }
@@ -16,8 +17,9 @@ NetWorkAccessManager::~NetWorkAccessManager()
 
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
-    QString url = request.url().toString();
-    if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && url.contains(QRegExp(this->interceptor)))
+    QString path = request.url().path();
+    qDebug() << path;
+    if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && path.contains(QRegExp(this->interceptor)))
     {
         QNetworkRequest req;
         req.setUrl(QUrl(""));
@@ -26,7 +28,19 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     QSslConfiguration sslConfig = request.sslConfiguration();
     sslConfig.setProtocol(QSsl::AnyProtocol);
     sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
-    return QNetworkAccessManager::createRequest(op, request, outgoingData);
+    QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
+    if(!this->extractor.isNull() && !this->extractor.isEmpty() && path.contains(QRegExp(this->extractor)))
+    {
+        connect(reply, &QNetworkReply::readyRead, [=](){
+            QByteArray array = reply->peek(10240);
+            if(extractMap->contains(path))
+            {
+                extractMap->remove(path);
+            }
+            extractMap->insert(path, array.toBase64());
+        });
+    }
+    return reply;
 }
 
 CookieJar * NetWorkAccessManager::getCookieJar()
@@ -37,4 +51,14 @@ CookieJar * NetWorkAccessManager::getCookieJar()
 void NetWorkAccessManager::setInterceptor(QString &interceptor)
 {
     this->interceptor = interceptor;
+}
+
+QMap<QString, QByteArray> * NetWorkAccessManager::getExtractMap()
+{
+    return this->extractMap;
+}
+
+void NetWorkAccessManager::setExtractor(QString &extractor)
+{
+    this->extractor = extractor;
 }

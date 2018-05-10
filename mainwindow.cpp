@@ -19,6 +19,7 @@
 #include <QToolBar>
 #include <QDesktopWidget>
 #include <QPrinter>
+#include <QMap>
 #include "cookiejar.h"
 
 MainWindow::MainWindow(int port, QWidget *parent) :
@@ -106,8 +107,11 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     if(currentOp == "load")
     {
-        QString interceptor = dataJson.value("interceptor").toString("");
-        webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
+        if(dataJson.contains("interceptor"))
+        {
+            QString interceptor = dataJson.value("interceptor").toString();
+            webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
+        }
         if(dataJson.contains("proxy"))
         {
             QJsonObject proxyJson = dataJson.value("proxy").toObject();
@@ -132,19 +136,46 @@ void MainWindow::on_tcpSocket_readyRead()
             QNetworkProxyFactory::setUseSystemConfiguration(true);
         }
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
-        webView->setUrl(url);
         this->progress = 0;
-        resultJsonObj.insert("code", 200);
-        resultJsonObj.insert("desc", "success");
-        resultJsonObj.insert("data", webView->url().toString());
-        writeToServer(resultJsonObj);
-
+        if(dataJson.contains("extractor"))
+        {
+            QString extractor = dataJson.value("extractor").toString();
+            webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
+            webView->setUrl(url);
+        }else
+        {
+            webView->setUrl(url);
+            resultJsonObj.insert("code", 200);
+            resultJsonObj.insert("desc", "success");
+            resultJsonObj.insert("data", webView->url().toString());
+            writeToServer(resultJsonObj);
+        }
     }
     else if(currentOp == "progress")
     {
         resultJsonObj.insert("code", 200);
         resultJsonObj.insert("desc", "success");
         resultJsonObj.insert("data", this->progress);
+        writeToServer(resultJsonObj);
+    }
+    else if(currentOp == "extract")
+    {
+
+        QString key = dataJson.value("path").toString();
+        QMap<QString, QByteArray> * map = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
+        if(map->contains(key))
+        {
+            QMap<QString, QByteArray>::iterator it = map->find(key);
+            resultJsonObj.insert("code", 200);
+            resultJsonObj.insert("desc", "success");
+            resultJsonObj.insert("data", QString(it.value()));
+        }
+        else
+        {
+            resultJsonObj.insert("code", 400);
+            resultJsonObj.insert("desc", "not found");
+            resultJsonObj.insert("data", QJsonValue::Null);
+        }
         writeToServer(resultJsonObj);
     }
     else if(currentOp == "getCookie")
