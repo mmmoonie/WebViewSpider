@@ -10,14 +10,14 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"op": "load",
-  	"interceptor": ".*(png|gif|jpg).*",
+      "op": "load",
+      "interceptor": ".*(png|gif|jpg).*",
       "extractor": "/VerifyImageServlet",
-  	"url": "https://www.example.com",
-  	"proxy": {
-  		"type": "http/socks5",
-  		"ip": "127.0.0.1",
-  		"port": 8888
+      "url": "https://www.example.com",
+      "proxy": {
+      "type": "http/socks5",
+      "ip": "127.0.0.1",
+      "port": 8888
   	}
   }
   ```
@@ -34,9 +34,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"code": "200",
-  	"desc": "success",
-  	"data": "https://www.example.com"
+      "code": "200",
+      "desc": "success",
+      "data": "https://www.example.com"
   }
   ```
 
@@ -70,8 +70,8 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"op": "screenshot",
-  	"selector": "img[src=VerifyImageServlet]"
+      "op": "screenshot",
+      "selector": "img[src=VerifyImageServlet]"
   }
   ```
 
@@ -81,9 +81,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"code": "200",
-  	"desc": "success",
-  	"data": "base64Image"
+      "code": "200",
+      "desc": "success",
+      "data": "base64Image"
   }
   ```
 
@@ -93,7 +93,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"op": "getCookie"
+      "op": "getCookie"
   }
   ```
 
@@ -101,15 +101,15 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"code": "1",
-  	"desc": "success",
-  	"data": [{
-  		"name": "JSESSION",
-  		"value": "..."
-  	},{
-  		"name": "...",
-  		"value": "..."
-  	}]
+      "code": "1",
+      "desc": "success",
+      "data": [{
+          "name": "JSESSION",
+          "value": "..."
+      },{
+          "name": "...",
+          "value": "..."
+      }]
   }
   ```
 
@@ -119,14 +119,14 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"op": "setCookie",
-  	"cookies": [{
-  		"name": "JSESSION",
-  		"value": "..."
-  	},{
-  		"name": "...",
-  		"value": "..."
-  	}]
+      "op": "setCookie",
+      "cookies": [{
+          "name": "JSESSION",
+          "value": "..."
+      },{
+          "name": "...",
+          "value": "..."
+      }]
   }
   ```
 
@@ -136,9 +136,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"code": "200",
-  	"desc": "success",
-  	"data": null
+      "code": "200",
+      "desc": "success",
+      "data": null
   }
   ```
 
@@ -146,8 +146,8 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"op": "exec",
-  	"js": "javaScript"
+      "op": "exec",
+      "js": "javaScript"
   }
   ```
 
@@ -159,9 +159,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"code": "200",
-  	"desc": "null or undefined",
-  	"data": null
+      "code": "200",
+      "desc": "null or undefined",
+      "data": null
   }
   ```
 
@@ -169,9 +169,9 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
 
   ```json
   {
-  	"code": "200",
-  	"desc": "success",
-  	"data": "..."
+      "code": "200",
+      "desc": "success",
+      "data": "..."
   }
   ```
 
