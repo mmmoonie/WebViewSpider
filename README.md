@@ -14,7 +14,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   	"interceptor": ".*(png|gif|jpg).*",
   	"url": "https://www.example.com",
   	"proxy": {
-  		"type": "http/socks",
+  		"type": "http/socks5",
   		"ip": "127.0.0.1",
   		"port": 8888
   	}
