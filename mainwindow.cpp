@@ -159,13 +159,16 @@ void MainWindow::on_tcpSocket_readyRead()
     {
 
         QString key = dataJson.value("extractor").toString();
+        QMap<QString, bool> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
         QMap<QString, QByteArray> * map = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
-        if(map->contains(key))
+        if(map->contains(key) && extractStatusMap->contains(key))
         {
             QMap<QString, QByteArray>::iterator it = map->find(key);
             resultJsonObj.insert("code", 200);
             resultJsonObj.insert("desc", "success");
-            resultJsonObj.insert("data", QString(it.value()));
+            resultJsonObj.insert("data", QString(it.value().toBase64()));
+            map->remove(key);
+            extractStatusMap->remove(key);
         }
         else
         {
@@ -194,6 +197,11 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     else if(currentOp == "exec")
     {
+        if(dataJson.contains("extractor"))
+        {
+            QString extractor = dataJson.value("extractor").toString();
+            webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
+        }
         QString tryCatch("try{%1}catch(err){err.toString();}");
         QString js = dataJson.value("js").toString().toLocal8Bit();
         QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));

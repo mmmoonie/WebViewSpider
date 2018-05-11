@@ -6,6 +6,7 @@
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
     extractMap = new QMap<QString, QByteArray>();
+    extractStatusMap = new QMap<QString, bool>();
     cookieJar = new CookieJar(this);
     setCookieJar(cookieJar);
 }
@@ -32,12 +33,21 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     if(!this->extractor.isNull() && !this->extractor.isEmpty() && path.contains(QRegExp(this->extractor)))
     {
         connect(reply, &QNetworkReply::readyRead, [=](){
-            QByteArray array = reply->peek(10240);
+            qint64 size = reply->bytesAvailable();
+            QByteArray array = reply->peek(size);
             if(extractMap->contains(path))
             {
-                extractMap->remove(path);
+                QMap<QString, QByteArray>::iterator it = extractMap->find(path);
+                it.value().append(array);
             }
-            extractMap->insert(path, array.toBase64());
+            else
+            {
+                extractMap->insert(path, array);
+            }
+
+        });
+        connect(reply, &QNetworkReply::finished, [=](){
+            extractStatusMap->insert(path, true);
         });
     }
     return reply;
@@ -56,6 +66,11 @@ void NetWorkAccessManager::setInterceptor(QString &interceptor)
 QMap<QString, QByteArray> * NetWorkAccessManager::getExtractMap()
 {
     return this->extractMap;
+}
+
+QMap<QString, bool> * NetWorkAccessManager::getExtractStatusMap()
+{
+    return this->extractStatusMap;
 }
 
 void NetWorkAccessManager::setExtractor(QString &extractor)

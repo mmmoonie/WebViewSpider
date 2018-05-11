@@ -18,6 +18,7 @@ public:
     void setInterceptor(QString &interceptor);
     void setExtractor(QString &extractor);
     QMap<QString, QByteArray> * getExtractMap();
+    QMap<QString, bool> * getExtractStatusMap();
 
 signals:
 
@@ -28,6 +29,7 @@ private:
     QString interceptor;
     QString extractor;
     QMap<QString, QByteArray> * extractMap;
+    QMap<QString, bool> * extractStatusMap;
 
 protected:
     QNetworkReply * createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData);

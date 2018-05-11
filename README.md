@@ -12,7 +12,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   {
       "op": "load",
       "interceptor": ".*(png|gif|jpg).*",
-      "extractor": "/VerifyImageServlet",
+      "extractor": "(/VerifyImageServlet|/js/md5.js)",
       "url": "https://www.example.com",
       "proxy": {
           "type": "http/socks5",
@@ -87,7 +87,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   }
   ```
 
-  data 表示 base64 编码过后的图片
+  data : base64 编码过后的图片
 
 - getCookie : 获取cookie 列表
 
@@ -113,7 +113,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   }
   ```
 
-  data 为 cookie 列表
+  data : cookie 列表
 
 - setCookie : 设置cookie 列表
 
@@ -130,7 +130,7 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   }
   ```
 
-  cookies 为要设置的 cookie 列表
+  cookies : 要设置的 cookie 列表
 
   结果 : 
 
@@ -147,11 +147,14 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   ```json
   {
       "op": "exec",
-      "js": "javaScript"
+      "js": "javaScript",
+      "extractor": "(/VerifyImageServlet|/js/md5.js)"
   }
   ```
 
-  js 为要执行的 javaScript 片段
+  js : 要执行的 javaScript 片段
+
+  extractor : （非必须）网络截取器，参数为正则表达式，此参数匹配的 URL path 返回的数据都会被缓存到QMap 中，供 extract 命令获取，其中 key 为完整的 URL path
 
   结果 : 
 
@@ -175,4 +178,4 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   }
   ```
 
-  data 为javaScript 执行后返回的结果
+  data : javaScript 执行后返回的结果
