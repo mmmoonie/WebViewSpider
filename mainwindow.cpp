@@ -140,7 +140,7 @@ void MainWindow::on_tcpSocket_readyRead()
             QString extractor = dataJson.value("extractor").toString();
             webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
         }
-        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
+        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
         this->progress = 0;
         webView->setUrl(url);
         resultJsonObj.insert("code", 200);
@@ -158,22 +158,39 @@ void MainWindow::on_tcpSocket_readyRead()
     else if(currentOp == "extract")
     {
 
-        QString key = dataJson.value("extractor").toString();
+        QJsonArray keys = dataJson.value("extractor").toArray();
         QMap<QString, bool> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
-        QMap<QString, QByteArray> * map = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
-        if(map->contains(key) && extractStatusMap->contains(key))
+        QMap<QString, QByteArray> * extractMap = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
+        bool ok = true;
+        for(int i = 0; i < keys.size(); i ++)
         {
-            QMap<QString, QByteArray>::iterator it = map->find(key);
+            QString key = keys.at(i).toString();
+            if(!extractStatusMap->contains(key) || !extractMap->contains(key))
+            {
+                ok = false;
+            }
+        }
+        if(ok)
+        {
+            QJsonArray dataArray;
+            for(int i = 0; i < keys.size(); i ++)
+            {
+                QString key = keys.at(i).toString();
+                QMap<QString, QByteArray>::iterator it = extractMap->find(key);
+                QJsonObject dataJson;
+                dataJson.insert(key, QString(it.value().toBase64()));
+                dataArray.append(dataJson);
+                extractMap->remove(key);
+                extractStatusMap->remove(key);
+            }
             resultJsonObj.insert("code", 200);
             resultJsonObj.insert("desc", "success");
-            resultJsonObj.insert("data", QString(it.value().toBase64()));
-            map->remove(key);
-            extractStatusMap->remove(key);
+            resultJsonObj.insert("data", dataArray);
         }
         else
         {
             resultJsonObj.insert("code", 400);
-            resultJsonObj.insert("desc", "not found");
+            resultJsonObj.insert("desc", "not ok");
             resultJsonObj.insert("data", QJsonValue::Null);
         }
         writeToServer(resultJsonObj);
