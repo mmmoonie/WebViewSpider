@@ -159,40 +159,7 @@ void MainWindow::on_tcpSocket_readyRead()
     {
 
         QJsonArray keys = dataJson.value("extractor").toArray();
-        QMap<QString, bool> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
-        QMap<QString, QByteArray> * extractMap = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
-        bool ok = true;
-        for(int i = 0; i < keys.size(); i ++)
-        {
-            QString key = keys.at(i).toString();
-            if(!extractStatusMap->contains(key) || !extractMap->contains(key))
-            {
-                ok = false;
-            }
-        }
-        if(ok)
-        {
-            QJsonArray dataArray;
-            for(int i = 0; i < keys.size(); i ++)
-            {
-                QString key = keys.at(i).toString();
-                QMap<QString, QByteArray>::iterator it = extractMap->find(key);
-                QJsonObject dataJson;
-                dataJson.insert(key, QString(it.value().toBase64()));
-                dataArray.append(dataJson);
-                extractMap->remove(key);
-                extractStatusMap->remove(key);
-            }
-            resultJsonObj.insert("code", 200);
-            resultJsonObj.insert("desc", "success");
-            resultJsonObj.insert("data", dataArray);
-        }
-        else
-        {
-            resultJsonObj.insert("code", 400);
-            resultJsonObj.insert("desc", "not ok");
-            resultJsonObj.insert("data", QJsonValue::Null);
-        }
+        this->extract(keys, resultJsonObj);
         writeToServer(resultJsonObj);
     }
     else if(currentOp == "getCookie")
@@ -375,4 +342,42 @@ void MainWindow::printPdf(QJsonObject &json)
     json.insert("code", 200);
     json.insert("desc", "success");
     json.insert("data", QJsonValue::Null);
+}
+
+void MainWindow::extract(const QJsonArray &keys, QJsonObject &json)
+{
+    QMap<QString, bool> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
+    QMap<QString, QByteArray> * extractMap = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
+    bool ok = true;
+    for(int i = 0; i < keys.size(); i ++)
+    {
+        QString key = keys.at(i).toString();
+        if(!extractStatusMap->contains(key) || !extractMap->contains(key))
+        {
+            ok = false;
+        }
+    }
+    if(ok)
+    {
+        QJsonArray dataArray;
+        for(int i = 0; i < keys.size(); i ++)
+        {
+            QString key = keys.at(i).toString();
+            QMap<QString, QByteArray>::iterator it = extractMap->find(key);
+            QJsonObject dataJson;
+            dataJson.insert(key, QString(it.value().toBase64()));
+            dataArray.append(dataJson);
+            extractMap->remove(key);
+            extractStatusMap->remove(key);
+        }
+        json.insert("code", 200);
+        json.insert("desc", "success");
+        json.insert("data", dataArray);
+    }
+    else
+    {
+        json.insert("code", 400);
+        json.insert("desc", "not ok");
+        json.insert("data", QJsonValue::Null);
+    }
 }

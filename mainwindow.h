@@ -41,7 +41,7 @@ private:
     void setCookie(QJsonObject &json, QJsonArray &cookieArray);
     void screenshot(const QString &selector, QJsonObject &json);
     void printPdf(QJsonObject &json);
-
+    void extract(const QJsonArray &keys, QJsonObject &json);
 };
 
 #endif // MAINWINDOW_H
