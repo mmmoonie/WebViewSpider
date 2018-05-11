@@ -135,21 +135,18 @@ void MainWindow::on_tcpSocket_readyRead()
         {
             QNetworkProxyFactory::setUseSystemConfiguration(true);
         }
-        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
-        this->progress = 0;
         if(dataJson.contains("extractor"))
         {
             QString extractor = dataJson.value("extractor").toString();
             webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
-            webView->setUrl(url);
-        }else
-        {
-            webView->setUrl(url);
-            resultJsonObj.insert("code", 200);
-            resultJsonObj.insert("desc", "success");
-            resultJsonObj.insert("data", webView->url().toString());
-            writeToServer(resultJsonObj);
         }
+        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank"));
+        this->progress = 0;
+        webView->setUrl(url);
+        resultJsonObj.insert("code", 200);
+        resultJsonObj.insert("desc", "success");
+        resultJsonObj.insert("data", webView->url().toString());
+        writeToServer(resultJsonObj);
     }
     else if(currentOp == "progress")
     {
@@ -161,7 +158,7 @@ void MainWindow::on_tcpSocket_readyRead()
     else if(currentOp == "extract")
     {
 
-        QString key = dataJson.value("path").toString();
+        QString key = dataJson.value("extractor").toString();
         QMap<QString, QByteArray> * map = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
         if(map->contains(key))
         {

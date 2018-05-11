@@ -47,11 +47,11 @@ WebViewSpider 由于是基于Qt 开发的，理论上是支持跨平台的，但
   ```json
   {
       "op": "extract",
-      "path": "/VerifyImageServlet"
+      "extractor": "/VerifyImageServlet"
   }
   ```
 
-  path : QMap 的 key
+  extractor : QMap 的 key
 
   结果 : 
 
