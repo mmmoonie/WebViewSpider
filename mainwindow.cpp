@@ -54,6 +54,9 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
         connect(webView, &QWebView::loadProgress, this, &MainWindow::on_webView_loadProcess);
         connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
+        connect(webView->getWebPage()->getNetworkAccessManager(), &QNetworkAccessManager::sslErrors, [=](QNetworkReply* qnr, const QList<QSslError> & errlist){
+            qnr->ignoreSslErrors();
+        });
         webView->load(QUrl("about:blank"));
         setCentralWidget(webView);
 
