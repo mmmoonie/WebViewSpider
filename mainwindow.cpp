@@ -32,11 +32,11 @@ MainWindow::MainWindow(int port, QWidget *parent) :
     bool flag = false;
     for(int i = 0; i < nets.count(); i ++)
     {
-        if(nets[i].flags().testFlag(QNetworkInterface::IsLoopBack))
+        QString macAddress = nets[i].hardwareAddress();
+        if(macAddress.isEmpty() || nets[i].flags().testFlag(QNetworkInterface::IsLoopBack))
         {
             continue;
         }
-        QString macAddress = nets[i].hardwareAddress();
         qDebug() << macAddress;
         if(macAddress.toLower() == "08:6d:41:cc:a1:aa")
         {
@@ -83,14 +83,12 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         webView->load(QUrl("about:blank"));
         setCentralWidget(webView);
 
-#ifdef QT_DEBUG
         QDesktopWidget* desktopWidget = QApplication::desktop();
         QRect screenRect = desktopWidget->availableGeometry();
         int width = screenRect.width();
         int height = screenRect.height();
         resize(width/2, height);
         move(0, 0);
-#endif
     }
 }
 
