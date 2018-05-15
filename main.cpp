@@ -15,11 +15,7 @@ int main(int argc, char *argv[])
         port = args[1].toInt();
     }
     MainWindow w(port);
-#ifdef QT_NO_DEBUG
-    w.showMinimized();
-#else
     w.show();
-#endif
 
     return app.exec();
 }

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui webkitwidgets printsupport
+QT       += core gui webkitwidgets printsupport network
 
 CONFIG += C++11
 
@@ -28,3 +28,7 @@ HEADERS  += mainwindow.h \
     cookiejar.h
 
 FORMS    += mainwindow.ui
+
+
+#QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
+#QMAKE_MAC_SDK = macosx10.9

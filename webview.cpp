@@ -6,7 +6,6 @@ WebView::WebView(QWidget *parent) : QWebView(parent)
 {
     webPage = new WebPage(this);
     setPage(webPage);
-#ifdef QT_DEBUG
     inspector = new QWebInspector;
     inspector->setPage(webPage);
     inspector->show();
@@ -16,7 +15,6 @@ WebView::WebView(QWidget *parent) : QWebView(parent)
     int height = screenRect.height();
     inspector->resize(width/2, height);
     inspector->move(width/2 + 2, 0);
-#endif
 }
 
 WebView::~WebView()

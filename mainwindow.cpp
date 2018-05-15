@@ -20,12 +20,35 @@
 #include <QDesktopWidget>
 #include <QPrinter>
 #include <QMap>
+#include <QNetworkInterface>
+#include <QList>
 #include "cookiejar.h"
 
 MainWindow::MainWindow(int port, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    QList<QNetworkInterface> nets = QNetworkInterface::allInterfaces();
+    bool flag = false;
+    for(int i = 0; i < nets.count(); i ++)
+    {
+        if(nets[i].flags().testFlag(QNetworkInterface::IsLoopBack))
+        {
+            continue;
+        }
+        QString macAddress = nets[i].hardwareAddress();
+        qDebug() << macAddress;
+        if(macAddress.toLower() == "08:6d:41:cc:a1:aa")
+        {
+            flag = true;
+            break;
+        }
+    }
+    if(!flag)
+    {
+        QMessageBox::warning(this, "warning", "access denied");
+        QTimer::singleShot(0, this, &MainWindow::close);
+    }
     tcpSocket = new QTcpSocket(this);
     tcpSocket->connectToHost(QHostAddress::LocalHost, port);
     if(!tcpSocket->waitForConnected(5000))
