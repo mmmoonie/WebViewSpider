@@ -10,10 +10,6 @@ int main(int argc, char *argv[])
         qDebug() << arg;
     }
     int port = 7200;
-    if(args.size() == 2)
-    {
-        port = args[1].toInt();
-    }
     MainWindow w(port);
     w.show();
 

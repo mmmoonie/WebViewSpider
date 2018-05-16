@@ -32,12 +32,13 @@ MainWindow::MainWindow(int port, QWidget *parent) :
     bool flag = false;
     for(int i = 0; i < nets.count(); i ++)
     {
-        QString macAddress = nets[i].hardwareAddress();
+        QString macAddress = nets[i].hardwareAddress().toLower();
         if(macAddress.isEmpty() || nets[i].flags().testFlag(QNetworkInterface::IsLoopBack))
         {
             continue;
         }
-        if(macAddress.toLower() == "08:6d:41:cc:a1:aa")
+        qDebug() << macAddress;
+        if(macAddress == "08:6d:41:cc:a1:aa" || macAddress.toLower() == QString("18:31:bf:0b:48:c1"))
         {
             flag = true;
             break;
@@ -47,6 +48,7 @@ MainWindow::MainWindow(int port, QWidget *parent) :
     {
         QMessageBox::warning(this, "warning", "access denied");
         QTimer::singleShot(0, this, &MainWindow::close);
+        return;
     }
     tcpSocket = new QTcpSocket(this);
     tcpSocket->connectToHost(QHostAddress::LocalHost, port);
@@ -130,6 +132,7 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     if(currentOp == "load")
     {
+        QMessageBox::information(this, "info", "nothing");
         if(dataJson.contains("interceptor"))
         {
             QString interceptor = dataJson.value("interceptor").toString();
