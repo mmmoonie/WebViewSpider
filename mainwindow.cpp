@@ -20,7 +20,6 @@
 #include <QDesktopWidget>
 #include <QPrinter>
 #include <QMap>
-#include <QNetworkInterface>
 #include <QList>
 #include "cookiejar.h"
 
@@ -28,28 +27,6 @@ MainWindow::MainWindow(int port, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    QList<QNetworkInterface> nets = QNetworkInterface::allInterfaces();
-    bool flag = false;
-    for(int i = 0; i < nets.count(); i ++)
-    {
-        QString macAddress = nets[i].hardwareAddress().toLower();
-        if(macAddress.isEmpty() || nets[i].flags().testFlag(QNetworkInterface::IsLoopBack))
-        {
-            continue;
-        }
-        qDebug() << macAddress;
-        if(macAddress == "08:6d:41:cc:a1:aa" || macAddress.toLower() == QString("18:31:bf:0b:48:c1"))
-        {
-            flag = true;
-            break;
-        }
-    }
-    if(!flag)
-    {
-        QMessageBox::warning(this, "warning", "access denied");
-        QTimer::singleShot(0, this, &MainWindow::close);
-        return;
-    }
     tcpSocket = new QTcpSocket(this);
     tcpSocket->connectToHost(QHostAddress::LocalHost, port);
     if(!tcpSocket->waitForConnected(5000))
@@ -132,7 +109,6 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     if(currentOp == "load")
     {
-        QMessageBox::information(this, "info", "nothing");
         if(dataJson.contains("interceptor"))
         {
             QString interceptor = dataJson.value("interceptor").toString();
@@ -167,6 +143,7 @@ void MainWindow::on_tcpSocket_readyRead()
             webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
         }
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
+        QMessageBox::information(this, QString::fromUtf8("url"), url.toString());
         this->progress = 0;
         webView->setUrl(url);
         resultJsonObj.insert("code", 200);
