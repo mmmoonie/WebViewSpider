@@ -37,7 +37,6 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         {
             continue;
         }
-        qDebug() << macAddress;
         if(macAddress.toLower() == "08:6d:41:cc:a1:aa")
         {
             flag = true;

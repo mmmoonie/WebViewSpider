@@ -1,5 +1,4 @@
 #include "webpage.h"
-#include <QDebug>
 #include <QDir>
 
 WebPage::WebPage(QObject *parent) : QWebPage(parent)
