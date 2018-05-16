@@ -2,7 +2,6 @@
 #define WEBVIEW_H
 
 #include <QWebView>
-#include <QWebInspector>
 #include "webpage.h"
 
 class WebView : public QWebView
@@ -19,9 +18,6 @@ public slots:
 
 private:
     WebPage * webPage;
-#ifdef QT_DEBUG
-    QWebInspector *inspector = 0;
-#endif
 };
 
 #endif // WEBVIEW_H

@@ -59,15 +59,6 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         });
         webView->load(QUrl("about:blank"));
         setCentralWidget(webView);
-
-#ifdef QT_DEBUG
-        QDesktopWidget* desktopWidget = QApplication::desktop();
-        QRect screenRect = desktopWidget->availableGeometry();
-        int width = screenRect.width();
-        int height = screenRect.height();
-        resize(width/2, height);
-        move(0, 0);
-#endif
     }
 }
 

@@ -1,7 +1,6 @@
 #include "networkaccessmanager.h"
 #include <QSslConfiguration>
 #include <QRegExp>
-#include <QDebug>
 
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
@@ -19,7 +18,6 @@ NetWorkAccessManager::~NetWorkAccessManager()
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
     QString path = request.url().path();
-    qDebug() << path;
     if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && path.contains(QRegExp(this->interceptor)))
     {
         QNetworkRequest req;

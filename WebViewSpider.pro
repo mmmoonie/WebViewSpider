@@ -28,3 +28,5 @@ HEADERS  += mainwindow.h \
     cookiejar.h
 
 FORMS    += mainwindow.ui
+
+win32{RC_ICONS = app.ico}

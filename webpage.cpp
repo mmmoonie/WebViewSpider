@@ -1,5 +1,4 @@
 #include "webpage.h"
-#include <QDebug>
 #include <QDir>
 
 WebPage::WebPage(QObject *parent) : QWebPage(parent)
@@ -36,11 +35,7 @@ WebPage::WebPage(QObject *parent) : QWebPage(parent)
     settings->setAttribute(QWebSettings::ScrollAnimatorEnabled, false);
     settings->setAttribute(QWebSettings::CaretBrowsingEnabled, false);
     settings->setAttribute(QWebSettings::NotificationsEnabled, false);
-#ifdef QT_DEBUG
-    settings->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
-#else
     settings->setAttribute(QWebSettings::DeveloperExtrasEnabled, false);
-#endif
 }
 
 WebPage::~WebPage()
@@ -51,12 +46,10 @@ WebPage::~WebPage()
 void WebPage::javaScriptAlert(QWebFrame *frame, const QString &msg)
 {
 
-    qDebug() << msg;
 }
 
 bool WebPage::javaScriptConfirm(QWebFrame *frame, const QString &msg)
 {
-    qDebug() << msg;
     return true;
 }
 
