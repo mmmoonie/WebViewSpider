@@ -136,6 +136,7 @@ void MainWindow::on_tcpSocket_readyRead()
         }
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
         this->progress = 0;
+        QWebSettings::clearMemoryCaches();
         webView->setUrl(url);
         resultJsonObj.insert("code", 200);
         resultJsonObj.insert("desc", "success");
@@ -182,6 +183,7 @@ void MainWindow::on_tcpSocket_readyRead()
         }
         QString tryCatch("try{%1}catch(err){err.toString();}");
         QString js = dataJson.value("js").toString().toLocal8Bit();
+        QWebSettings::clearMemoryCaches();
         QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
         if(val.isNull() || !val.isValid())
         {

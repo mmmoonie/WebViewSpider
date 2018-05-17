@@ -1,5 +1,4 @@
 #include "networkaccessmanager.h"
-#include <QSslConfiguration>
 #include <QRegExp>
 
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
@@ -24,9 +23,6 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
         req.setUrl(QUrl(""));
         return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
-    QSslConfiguration sslConfig = request.sslConfiguration();
-    sslConfig.setProtocol(QSsl::AnyProtocol);
-    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
     QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
     if(!this->extractor.isNull() && !this->extractor.isEmpty() && path.contains(QRegExp(this->extractor)))
     {
