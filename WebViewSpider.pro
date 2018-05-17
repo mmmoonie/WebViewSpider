@@ -30,3 +30,5 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 win32{RC_ICONS = app.ico}
+
+unix{ICON = app.icns}
