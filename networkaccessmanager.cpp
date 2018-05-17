@@ -30,6 +30,16 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
     if(!this->extractor.isNull() && !this->extractor.isEmpty() && path.contains(QRegExp(this->extractor)))
     {
+        QMap<QString, QByteArray>::iterator extractMapIt = extractMap->find(path);
+        if(extractMapIt != extractMap->end())
+        {
+            extractMap->erase(extractMapIt);
+        }
+        QMap<QString, bool>::iterator extractStatusMapIt = extractStatusMap->find(path);
+        if(extractStatusMapIt != extractStatusMap->end())
+        {
+            extractStatusMap->erase(extractStatusMapIt);
+        }
         connect(reply, &QNetworkReply::readyRead, [=](){
             qint64 size = reply->bytesAvailable();
             QByteArray array = reply->peek(size);
