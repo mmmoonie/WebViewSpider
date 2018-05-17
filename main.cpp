@@ -9,8 +9,7 @@ int main(int argc, char *argv[])
     {
         qDebug() << arg;
     }
-    int port = 7200;
-    MainWindow w(port);
+    MainWindow w;
     w.show();
 
     return app.exec();

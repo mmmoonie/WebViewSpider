@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTcpServer>
 #include <QTcpSocket>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -17,8 +18,9 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(int port, QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void on_tcpServer_newConnection();
     void on_tcpSocket_readyRead();
     void on_webView_loadStarted();
     void on_webView_loadFinished();
@@ -33,6 +35,7 @@ private:
     Ui::MainWindow *ui;
     QLineEdit * locationEdit;
     WebView * webView;
+    QTcpServer * tcpServer;
     QTcpSocket * tcpSocket;
     QString currentOp;
     int progress = 0;

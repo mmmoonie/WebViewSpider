@@ -23,18 +23,20 @@
 #include <QList>
 #include "cookiejar.h"
 
-MainWindow::MainWindow(int port, QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    tcpSocket = new QTcpSocket(this);
-    tcpSocket->connectToHost(QHostAddress::LocalHost, port);
-    if(!tcpSocket->waitForConnected(5000))
+    tcpServer = new QTcpServer(this);
+    if(!tcpServer->listen(QHostAddress::Any, 7100))
     {
+        QMessageBox::warning(this, "warn", "can't listen on 7100");
         QTimer::singleShot(0, this, &MainWindow::close);
+        return;
     }
     else
     {
+        connect(tcpServer, &QTcpServer::newConnection, this, &MainWindow::on_tcpServer_newConnection);
         ui->setupUi(this);
         webView = new WebView(this);
 
@@ -51,7 +53,6 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         toolBar->addAction(webView->pageAction(QWebPage::Stop));
         toolBar->addWidget(locationEdit);
 
-        connect(tcpSocket, &QTcpSocket::readyRead, this, &MainWindow::on_tcpSocket_readyRead);
         connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
         connect(webView, &QWebView::loadProgress, this, &MainWindow::on_webView_loadProcess);
         connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
@@ -81,11 +82,19 @@ void MainWindow::on_locationEdit_returnPressed()
     webView->load(url);
 }
 
+void MainWindow::on_tcpServer_newConnection()
+{
+    tcpSocket = tcpServer->nextPendingConnection();
+    connect(tcpSocket, &QTcpSocket::readyRead, this, &MainWindow::on_tcpSocket_readyRead);
+}
+
 void MainWindow::on_tcpSocket_readyRead()
 {
-    QByteArray data = tcpSocket->readAll();
+    QString data = tcpSocket->readAll();
+    qDebug() << data;
+    data = data.replace("boundary-----------", "");
     QJsonParseError * parseError = new QJsonParseError;
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(data, parseError);
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(data.toUtf8(), parseError);
     if(parseError->error != QJsonParseError::NoError || jsonDoc.isNull())
     {
         QJsonObject resultJsonObj;
@@ -143,7 +152,6 @@ void MainWindow::on_tcpSocket_readyRead()
             webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
         }
         QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
-        QMessageBox::information(this, QString::fromUtf8("url"), url.toString());
         this->progress = 0;
         webView->setUrl(url);
         resultJsonObj.insert("code", 200);
@@ -257,6 +265,8 @@ void MainWindow::writeToServer(QJsonObject &json)
     QJsonDocument resultJsonDoc;
     resultJsonDoc.setObject(json);
     QByteArray data = resultJsonDoc.toJson(QJsonDocument::Compact);
+    data.append(QString("\r\n"));
+    data.append(QString("boundary-----------"));
     data.append(QString("\r\n"));
     tcpSocket->write(data);
 }
