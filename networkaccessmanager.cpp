@@ -5,13 +5,20 @@ NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessMana
 {
     extractMap = new QMap<QString, QByteArray>();
     extractStatusMap = new QMap<QString, bool>();
-    cookieJar = new CookieJar(this);
+    cookieJar = new CookieJar;
     setCookieJar(cookieJar);
 }
 
 NetWorkAccessManager::~NetWorkAccessManager()
 {
+    delete cookieJar;
+}
 
+void NetWorkAccessManager::clearAllCookie()
+{
+    cookieJar->deleteLater();
+    cookieJar = new CookieJar;
+    setCookieJar(cookieJar);
 }
 
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)

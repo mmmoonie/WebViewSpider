@@ -13,6 +13,11 @@ public:
     explicit CookieJar(QObject *parent = 0);
     ~CookieJar();
     QList<QNetworkCookie> getAllCookies();
+    QList<QNetworkCookie> cookiesForUrl(const QUrl &url);
+    bool deleteCookie(const QNetworkCookie &cookie);
+    bool insertCookie(const QNetworkCookie &cookie);
+    bool setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url);
+    bool updateCookie(const QNetworkCookie &cookie);
 
 signals:
 

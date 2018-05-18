@@ -91,7 +91,6 @@ void MainWindow::on_tcpServer_newConnection()
 void MainWindow::on_tcpSocket_readyRead()
 {
     QString data = tcpSocket->readAll();
-    qDebug() << data;
     data = data.replace("boundary-----------", "");
     QJsonParseError * parseError = new QJsonParseError;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(data.toUtf8(), parseError);
@@ -145,6 +144,10 @@ void MainWindow::on_tcpSocket_readyRead()
         else
         {
             QNetworkProxyFactory::setUseSystemConfiguration(true);
+        }
+        if(dataJson.contains("clear") && dataJson.value("clear").toBool(false))
+        {
+            webView->getWebPage()->getNetworkAccessManager()->clearAllCookie();
         }
         if(dataJson.contains("extractor"))
         {
