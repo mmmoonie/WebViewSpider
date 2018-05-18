@@ -129,6 +129,10 @@ void MainWindow::on_tcpSocket_readyRead()
         {
             QNetworkProxyFactory::setUseSystemConfiguration(true);
         }
+        if(dataJson.contains("clear") && dataJson.value("clear").toBool(false))
+        {
+            webView->getWebPage()->getNetworkAccessManager()->clearAllCookie();
+        }
         if(dataJson.contains("extractor"))
         {
             QString extractor = dataJson.value("extractor").toString();

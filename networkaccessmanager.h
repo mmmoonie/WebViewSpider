@@ -15,6 +15,7 @@ public:
     explicit NetWorkAccessManager(QObject *parent = 0);
     ~NetWorkAccessManager();
     CookieJar * getCookieJar();
+    void clearAllCookie();
     void setInterceptor(QString &interceptor);
     void setExtractor(QString &extractor);
     QMap<QString, QByteArray> * getExtractMap();
