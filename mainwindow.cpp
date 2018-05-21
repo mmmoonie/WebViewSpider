@@ -172,9 +172,9 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     else if(currentOp == "extract")
     {
-
         QJsonArray keys = dataJson.value("extractor").toArray();
-        this->extract(keys, resultJsonObj);
+        int count = dataJson.value("count").toInt(1);
+        this->extract(keys, count, resultJsonObj);
         writeToServer(resultJsonObj);
     }
     else if(currentOp == "getCookie")
@@ -362,18 +362,23 @@ void MainWindow::printPdf(QJsonObject &json)
     json.insert("data", QJsonValue::Null);
 }
 
-void MainWindow::extract(const QJsonArray &keys, QJsonObject &json)
+void MainWindow::extract(const QJsonArray &keys, int count, QJsonObject &json)
 {
-    QMap<QString, bool> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
+    QMap<QString, int> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
     QMap<QString, QByteArray> * extractMap = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
     bool ok = true;
     for(int i = 0; i < keys.size(); i ++)
     {
         QString key = keys.at(i).toString();
-        if(!extractStatusMap->contains(key) || !extractMap->contains(key))
+        QMap<QString, int>::iterator extractStatusMapIt = extractStatusMap->find(key);
+        if(extractStatusMapIt != extractStatusMap->end()
+                && extractStatusMapIt.value() >= count
+                && extractMap->contains(key))
         {
-            ok = false;
+            continue;
         }
+        ok = false;
+        break;
     }
     if(ok)
     {
@@ -381,11 +386,9 @@ void MainWindow::extract(const QJsonArray &keys, QJsonObject &json)
         for(int i = 0; i < keys.size(); i ++)
         {
             QString key = keys.at(i).toString();
-            QMap<QString, QByteArray>::iterator it = extractMap->find(key);
             QJsonObject dataJson;
-            dataJson.insert(key, QString(it.value().toBase64()));
+            dataJson.insert(key, QString(extractMap->take(key).toBase64()));
             dataArray.append(dataJson);
-            extractMap->remove(key);
             extractStatusMap->remove(key);
         }
         json.insert("code", 200);
