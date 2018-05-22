@@ -59,7 +59,11 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
             {
                 extractStatusMapIt.value() = extractStatusMapIt.value() + 1;
             }
-            extractStatusMap->insert(path, true);
+            else
+            {
+                extractStatusMap->insert(path, 1);
+            }
+
         });
     }
     return reply;
