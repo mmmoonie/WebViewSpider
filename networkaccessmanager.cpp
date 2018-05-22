@@ -52,6 +52,7 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
             }
         });
         connect(reply, &QNetworkReply::finished, [=](){
+            qDebug() << path << "load finished";
             QMap<QString, int>::iterator extractStatusMapIt = extractStatusMap->find(path);
             if(extractStatusMapIt != extractStatusMap->end())
             {

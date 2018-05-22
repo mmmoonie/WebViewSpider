@@ -91,6 +91,7 @@ void MainWindow::on_tcpServer_newConnection()
 void MainWindow::on_tcpSocket_readyRead()
 {
     QString data = tcpSocket->readAll();
+    qDebug() << data;
     data = data.replace("boundary-----------", "");
     QJsonParseError * parseError = new QJsonParseError;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(data.toUtf8(), parseError);
@@ -390,6 +391,8 @@ void MainWindow::extract(const QJsonArray &keys, int count, QJsonObject &json)
             dataJson.insert(key, QString(extractMap->take(key).toBase64()));
             dataArray.append(dataJson);
             extractStatusMap->remove(key);
+            QString blank = "";
+            this->webView->getWebPage()->getNetworkAccessManager()->setExtractor(blank);
         }
         json.insert("code", 200);
         json.insert("desc", "success");
