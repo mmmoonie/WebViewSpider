@@ -4,7 +4,6 @@
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
     extractMap = new QMap<QString, QByteArray>();
-    extractStatusMap = new QMap<QString, int>();
     cookieJar = new CookieJar;
     setCookieJar(cookieJar);
 }
@@ -23,47 +22,46 @@ void NetWorkAccessManager::clearAllCookie()
 
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
-    QString path = request.url().path();
-    if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && path.contains(QRegExp(this->interceptor)))
+    QString url = request.url().toString();
+    if(!this->interceptor.isNull() && !this->interceptor.isEmpty() && url.contains(QRegExp(this->interceptor)))
     {
         QNetworkRequest req;
         req.setUrl(QUrl(""));
         return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
     QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
-    if(!this->extractor.isNull() && !this->extractor.isEmpty() && path.contains(QRegExp(this->extractor)))
+
+    if(!request.url().path().contains(QRegExp(".*(gif|jpg|png|css|js).*")))
     {
-        QMap<QString, QByteArray>::iterator extractMapIt = extractMap->find(path);
-        if(extractMapIt != extractMap->end())
-        {
-            extractMap->erase(extractMapIt);
+        if(outgoingData != 0) {
+            if(outgoingData->isReadable()) {
+               QByteArray formData = outgoingData->peek(4096);
+               url.append("?").append(formData);
+            }
         }
-        connect(reply, &QNetworkReply::readyRead, [=](){
+        QCryptographicHash md5(QCryptographicHash::Md5);
+        md5.addData(url.toUtf8());
+        QByteArray key = md5.result().toHex();
+
+        QMap<QString, QByteArray>::iterator it = extractMap->find(key);
+        if(it != extractMap->end())
+        {
+            extractMap->erase(it);
+        }
+
+        QByteArray * data = new QByteArray;
+        connect(reply, &QNetworkReply::readyRead, [reply, data](){
             qint64 size = reply->bytesAvailable();
             QByteArray array = reply->peek(size);
-            if(extractMap->contains(path))
-            {
-                QMap<QString, QByteArray>::iterator it = extractMap->find(path);
-                it.value().append(array);
-            }
-            else
-            {
-                extractMap->insert(path, array);
-            }
+            data->append(array);
         });
         connect(reply, &QNetworkReply::finished, [=](){
-            qDebug() << path << "load finished";
-            QMap<QString, int>::iterator extractStatusMapIt = extractStatusMap->find(path);
-            if(extractStatusMapIt != extractStatusMap->end())
-            {
-                extractStatusMapIt.value() = extractStatusMapIt.value() + 1;
-            }
-            else
-            {
-                extractStatusMap->insert(path, 1);
-            }
+            qDebug() << url << key << "finished";
+            extractMap->insert(key, (*data).toBase64());
+            delete data;
         });
     }
+
     return reply;
 }
 
@@ -72,22 +70,12 @@ CookieJar * NetWorkAccessManager::getCookieJar()
     return cookieJar;
 }
 
-void NetWorkAccessManager::setInterceptor(QString &interceptor)
-{
-    this->interceptor = interceptor;
-}
-
 QMap<QString, QByteArray> * NetWorkAccessManager::getExtractMap()
 {
     return this->extractMap;
 }
 
-QMap<QString, int> * NetWorkAccessManager::getExtractStatusMap()
+void NetWorkAccessManager::setInterceptor(QString &interceptor)
 {
-    return this->extractStatusMap;
-}
-
-void NetWorkAccessManager::setExtractor(QString &extractor)
-{
-    this->extractor = extractor;
+    this->interceptor = interceptor;
 }

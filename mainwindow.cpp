@@ -9,8 +9,6 @@
 #include <QPainter>
 #include <QImage>
 #include <QVariant>
-#include <QNetworkProxyFactory>
-#include <QNetworkProxy>
 #include <QMessageBox>
 #include <QTimer>
 #include <QJsonParseError>
@@ -22,6 +20,8 @@
 #include <QMap>
 #include <QList>
 #include "cookiejar.h"
+#include "extracthandler.h"
+#include "loadhandler.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -60,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
             qnr->ignoreSslErrors();
         });
         webView->load(QUrl("about:blank"));
+//        webView->load(QUrl("https://puser.zjzwfw.gov.cn/sso/usp.do?action=ssoLogin&servicecode=jhsgjjcx"));
         setCentralWidget(webView);
 
         QDesktopWidget* desktopWidget = QApplication::desktop();
@@ -118,47 +119,9 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     if(currentOp == "load")
     {
-        if(dataJson.contains("interceptor"))
-        {
-            QString interceptor = dataJson.value("interceptor").toString();
-            webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
-        }
-        if(dataJson.contains("proxy"))
-        {
-            QJsonObject proxyJson = dataJson.value("proxy").toObject();
-            QString type = proxyJson.value("type").toString();
-            QString ip = proxyJson.value("ip").toString();
-            int port = proxyJson.value("port").toInt();
-            QNetworkProxy proxy;
-            if(type == "socks5")
-            {
-                proxy.setType(QNetworkProxy::Socks5Proxy);
-            }
-            else
-            {
-                proxy.setType(QNetworkProxy::HttpProxy);
-            }
-            proxy.setHostName(ip);
-            proxy.setPort(port);
-            QNetworkProxy::setApplicationProxy(proxy);
-        }
-        else
-        {
-            QNetworkProxyFactory::setUseSystemConfiguration(true);
-        }
-        if(dataJson.contains("clear") && dataJson.value("clear").toBool(false))
-        {
-            webView->getWebPage()->getNetworkAccessManager()->clearAllCookie();
-        }
-        if(dataJson.contains("extractor"))
-        {
-            QString extractor = dataJson.value("extractor").toString();
-            webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
-        }
-        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
+        LoadHandler loadHandler(webView);
+        loadHandler.handle(dataJson);
         this->progress = 0;
-        QWebSettings::clearMemoryCaches();
-        webView->setUrl(url);
         resultJsonObj.insert("code", 200);
         resultJsonObj.insert("desc", "success");
         resultJsonObj.insert("data", webView->url().toString());
@@ -174,8 +137,22 @@ void MainWindow::on_tcpSocket_readyRead()
     else if(currentOp == "extract")
     {
         QJsonArray keys = dataJson.value("extractor").toArray();
-        int count = dataJson.value("count").toInt(1);
-        this->extract(keys, count, resultJsonObj);
+        ExtractHandler handler(webView);
+        QJsonArray dataArray;
+        for(int i = 0; i < keys.size(); i ++)
+        {
+            QString key = keys.at(i).toString();
+            QByteArray data = handler.handle(key);
+            if(data != nullptr)
+            {
+                QJsonObject dataJson;
+                dataJson.insert(key, QString(data));
+                dataArray.append(dataJson);
+            }
+        }
+        resultJsonObj.insert("code", 200);
+        resultJsonObj.insert("desc", "success");
+        resultJsonObj.insert("data", dataArray);
         writeToServer(resultJsonObj);
     }
     else if(currentOp == "getCookie")
@@ -197,14 +174,10 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     else if(currentOp == "exec")
     {
-        if(dataJson.contains("extractor"))
-        {
-            QString extractor = dataJson.value("extractor").toString();
-            webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
-        }
         QString tryCatch("try{%1}catch(err){err.toString();}");
         QString js = dataJson.value("js").toString().toLocal8Bit();
         QWebSettings::clearMemoryCaches();
+        this->webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
         QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
         if(val.isNull() || !val.isValid())
         {
@@ -256,6 +229,7 @@ void MainWindow::on_webView_titleChanged()
 void MainWindow::on_webView_loadStarted()
 {
     this->progress = 0;
+    this->webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
 }
 
 void MainWindow::on_webView_loadFinished()
@@ -361,47 +335,4 @@ void MainWindow::printPdf(QJsonObject &json)
     json.insert("code", 200);
     json.insert("desc", "success");
     json.insert("data", QJsonValue::Null);
-}
-
-void MainWindow::extract(const QJsonArray &keys, int count, QJsonObject &json)
-{
-    QMap<QString, int> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
-    QMap<QString, QByteArray> * extractMap = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
-    bool ok = true;
-    for(int i = 0; i < keys.size(); i ++)
-    {
-        QString key = keys.at(i).toString();
-        QMap<QString, int>::iterator extractStatusMapIt = extractStatusMap->find(key);
-        if(extractStatusMapIt != extractStatusMap->end()
-                && extractStatusMapIt.value() >= count
-                && extractMap->contains(key))
-        {
-            continue;
-        }
-        ok = false;
-        break;
-    }
-    if(ok)
-    {
-        QJsonArray dataArray;
-        for(int i = 0; i < keys.size(); i ++)
-        {
-            QString key = keys.at(i).toString();
-            QJsonObject dataJson;
-            dataJson.insert(key, QString(extractMap->take(key).toBase64()));
-            dataArray.append(dataJson);
-            extractStatusMap->remove(key);
-            QString blank = "";
-            this->webView->getWebPage()->getNetworkAccessManager()->setExtractor(blank);
-        }
-        json.insert("code", 200);
-        json.insert("desc", "success");
-        json.insert("data", dataArray);
-    }
-    else
-    {
-        json.insert("code", 400);
-        json.insert("desc", "not ok");
-        json.insert("data", QJsonValue::Null);
-    }
 }
