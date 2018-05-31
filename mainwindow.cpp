@@ -202,6 +202,11 @@ void MainWindow::on_webView_loadFinished()
     on_webView_titleChanged();
     QWebSettings::clearMemoryCaches();
     locationEdit->setText(webView->url().toString());
+    QVariant widthVal = webView->getWebPage()->mainFrame()->evaluateJavaScript("document.body.scrollWidth");
+    int width = widthVal.toInt();
+    QVariant heightVal = webView->getWebPage()->mainFrame()->evaluateJavaScript("document.body.scrollHeight");
+    int height = heightVal.toInt();
+    resize(QSize(width, height));
 }
 
 void MainWindow::writeToServer(QJsonObject &json)
