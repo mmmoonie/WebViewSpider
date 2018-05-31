@@ -16,7 +16,6 @@ public:
     ~NetWorkAccessManager();
     CookieJar * getCookieJar();
     void setInterceptor(QString &interceptor);
-    void clearAllCookie();
     QMap<QString, QByteArray> * getExtractMap();
 
 signals:

@@ -13,13 +13,6 @@ NetWorkAccessManager::~NetWorkAccessManager()
     delete cookieJar;
 }
 
-void NetWorkAccessManager::clearAllCookie()
-{
-    cookieJar->deleteLater();
-    cookieJar = new CookieJar;
-    setCookieJar(cookieJar);
-}
-
 QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
     QString url = request.url().toString();
@@ -30,20 +23,17 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
         return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
     QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
-
-    if(!request.url().path().contains(QRegExp(".*(gif|jpg|png|css|js).*")))
+    QString path = request.url().path();
+    if(!path.contains(QRegExp(".*(gif|jpg|png|css|js).*")))
     {
         if(outgoingData != 0) {
             if(outgoingData->isReadable()) {
                QByteArray formData = outgoingData->peek(4096);
-               url.append("?").append(formData);
+               path.append("?").append(formData);
             }
         }
-        QCryptographicHash md5(QCryptographicHash::Md5);
-        md5.addData(url.toUtf8());
-        QByteArray key = md5.result().toHex();
 
-        QMap<QString, QByteArray>::iterator it = extractMap->find(key);
+        QMap<QString, QByteArray>::iterator it = extractMap->find(path);
         if(it != extractMap->end())
         {
             extractMap->erase(it);
@@ -56,8 +46,8 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
             data->append(array);
         });
         connect(reply, &QNetworkReply::finished, [=](){
-            qDebug() << url << key << "finished";
-            extractMap->insert(key, (*data).toBase64());
+            qDebug() << path << "finished";
+            extractMap->insert(path, (*data).toBase64());
             delete data;
         });
     }

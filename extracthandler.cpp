@@ -10,20 +10,28 @@ ExtractHandler::~ExtractHandler()
 
 }
 
-QByteArray ExtractHandler::handle(QString key)
+QJsonObject ExtractHandler::handle(QJsonArray keys)
 {
     NetWorkAccessManager * accessManager = webView->getWebPage()->getNetworkAccessManager();
     QMap<QString, QByteArray> * dataMap = accessManager->getExtractMap();
-    QCryptographicHash md5(QCryptographicHash::Md5);
-    md5.addData(key.toUtf8());
-    QMap<QString, QByteArray>::iterator it = dataMap->find(md5.result().toHex());
-    if(it == dataMap->end())
+    QJsonArray dataArray;
+    for(int i = 0; i < keys.size(); i ++)
     {
-        return nullptr;
+        QString key = keys.at(i).toString();
+        QMap<QString, QByteArray>::iterator it;
+        for(it = dataMap->begin(); it != dataMap->end(); it ++) {
+            if(it.key().contains(QRegExp(key))) {
+                QJsonObject dataJson;
+                dataJson.insert(key, QString(it.value()));
+                dataArray.append(dataJson);
+            }
+        }
     }
-    else
-    {
-        return it.value();
-    }
+    QJsonObject json;
+    json.insert("code", 200);
+    json.insert("desc", "success");
+    json.insert("data", dataArray);
+    return json;
+
 }
 

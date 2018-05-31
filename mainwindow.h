@@ -40,9 +40,6 @@ private:
     QString currentOp;
     int progress = 0;
     void writeToServer(QJsonObject &json);
-    void getCookie(QJsonObject &json);
-    void setCookie(QJsonObject &json, QJsonArray &cookieArray);
-    void screenshot(const QString &selector, QJsonObject &json);
     void printPdf(QJsonObject &json);
 };
 

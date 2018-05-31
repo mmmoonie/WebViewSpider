@@ -11,7 +11,7 @@ LoadHandler::~LoadHandler()
 
 }
 
-void LoadHandler::handle(QJsonObject &dataJson)
+QJsonObject LoadHandler::handle(QJsonObject &dataJson)
 {
     if(dataJson.contains("interceptor"))
     {
@@ -41,12 +41,12 @@ void LoadHandler::handle(QJsonObject &dataJson)
     {
         QNetworkProxyFactory::setUseSystemConfiguration(true);
     }
-    if(dataJson.contains("clear") && dataJson.value("clear").toBool(false))
-    {
-        webView->getWebPage()->getNetworkAccessManager()->clearAllCookie();
-    }
     QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
-    QWebSettings::clearMemoryCaches();
     this->webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
     webView->setUrl(url);
+    QJsonObject json;
+    json.insert("code", 200);
+    json.insert("desc", "success");
+    json.insert("data", webView->url().toString());
+    return json;
 }

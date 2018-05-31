@@ -8,7 +8,7 @@ class LoadHandler
 {
 public:
     LoadHandler(WebView * webView = 0);
-    void handle(QJsonObject &dataJson);
+    QJsonObject handle(QJsonObject &dataJson);
     ~LoadHandler();
 
 private:
