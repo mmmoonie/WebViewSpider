@@ -1,26 +1,24 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QUrl>
-#include <QWebFrame>
-#include <QVariant>
-#include <QNetworkCookieJar>
-#include <QNetworkCookie>
-#include <QWebElement>
-#include <QPainter>
-#include <QImage>
 #include <QVariant>
 #include <QNetworkProxyFactory>
-#include <QNetworkProxy>
 #include <QMessageBox>
 #include <QTimer>
 #include <QJsonParseError>
 #include <QJsonDocument>
 #include <QBuffer>
 #include <QToolBar>
-#include <QDesktopWidget>
 #include <QPrinter>
-#include <QMap>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QDesktopWidget>
 #include "cookiejar.h"
+#include "extracthandler.h"
+#include "loadhandler.h"
+#include "cookiehandler.h"
+#include "screenshothandler.h"
+#include "exechandler.h"
 
 MainWindow::MainWindow(int port, QWidget *parent) :
     QMainWindow(parent),
@@ -51,6 +49,7 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         toolBar->addWidget(locationEdit);
 
         connect(tcpSocket, &QTcpSocket::readyRead, this, &MainWindow::on_tcpSocket_readyRead);
+        connect(webView, &WebView::loadStarted, this, &MainWindow::on_webView_loadStarted);
         connect(webView, &WebView::loadFinished, this, &MainWindow::on_webView_loadFinished);
         connect(webView, &QWebView::loadProgress, this, &MainWindow::on_webView_loadProcess);
         connect(webView, &QWebView::titleChanged, this, &MainWindow::on_webView_titleChanged);
@@ -59,6 +58,13 @@ MainWindow::MainWindow(int port, QWidget *parent) :
         });
         webView->load(QUrl("about:blank"));
         setCentralWidget(webView);
+
+        QDesktopWidget* desktopWidget = QApplication::desktop();
+        QRect screenRect = desktopWidget->availableGeometry();
+        int width = screenRect.width();
+        int height = screenRect.height();
+        resize(width, height);
+        move(0, 0);
     }
 }
 
@@ -88,132 +94,70 @@ void MainWindow::on_tcpSocket_readyRead()
         return;
     }
     QJsonObject dataJson = jsonDoc.object();
-    QJsonObject resultJsonObj;
     currentOp = dataJson.value("op").toString();
-    QString currentUrl = webView->url().toString();
-    if(currentUrl == "about:blank" && currentOp != "load")
-    {
-        resultJsonObj.insert("code", 400);
-        resultJsonObj.insert("desc", "first command must be load");
-        resultJsonObj.insert("data", QJsonValue::Null);
-        writeToServer(resultJsonObj);
-        return;
-    }
+
     if(currentOp == "load")
     {
-        if(dataJson.contains("interceptor"))
-        {
-            QString interceptor = dataJson.value("interceptor").toString();
-            webView->getWebPage()->getNetworkAccessManager()->setInterceptor(interceptor);
-        }
-        if(dataJson.contains("proxy"))
-        {
-            QJsonObject proxyJson = dataJson.value("proxy").toObject();
-            QString type = proxyJson.value("type").toString();
-            QString ip = proxyJson.value("ip").toString();
-            int port = proxyJson.value("port").toInt();
-            QNetworkProxy proxy;
-            if(type == "socks5")
-            {
-                proxy.setType(QNetworkProxy::Socks5Proxy);
-            }
-            else
-            {
-                proxy.setType(QNetworkProxy::HttpProxy);
-            }
-            proxy.setHostName(ip);
-            proxy.setPort(port);
-            QNetworkProxy::setApplicationProxy(proxy);
-        }
-        else
-        {
-            QNetworkProxyFactory::setUseSystemConfiguration(true);
-        }
-        if(dataJson.contains("clear") && dataJson.value("clear").toBool(false))
-        {
-            webView->getWebPage()->getNetworkAccessManager()->clearAllCookie();
-        }
-        if(dataJson.contains("extractor"))
-        {
-            QString extractor = dataJson.value("extractor").toString();
-            webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
-        }
-        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString("about:blank").toLocal8Bit());
+        QJsonObject json = LoadHandler(webView).handle(dataJson);
         this->progress = 0;
-        QWebSettings::clearMemoryCaches();
-        webView->setUrl(url);
-        resultJsonObj.insert("code", 200);
-        resultJsonObj.insert("desc", "success");
-        resultJsonObj.insert("data", webView->url().toString());
-        writeToServer(resultJsonObj);
+        writeToServer(json);
     }
     else if(currentOp == "progress")
     {
-        resultJsonObj.insert("code", 200);
-        resultJsonObj.insert("desc", "success");
-        resultJsonObj.insert("data", this->progress);
-        writeToServer(resultJsonObj);
+        QJsonObject json;
+        json.insert("code", 200);
+        json.insert("desc", "success");
+        json.insert("data", this->progress);
+        writeToServer(json);
     }
     else if(currentOp == "extract")
     {
         QJsonArray keys = dataJson.value("extractor").toArray();
-        int count = dataJson.value("count").toInt(1);
-        this->extract(keys, count, resultJsonObj);
-        writeToServer(resultJsonObj);
+        QJsonObject json = ExtractHandler(webView).handle(keys);
+        writeToServer(json);
     }
     else if(currentOp == "getCookie")
     {
-        this->getCookie(resultJsonObj);
-        writeToServer(resultJsonObj);
+        QJsonObject json = CookieHandler(webView).getAllCookies();
+        writeToServer(json);
     }
     else if(currentOp == "setCookie")
     {
         QJsonArray cookieArray = dataJson.value("cookies").toArray();
-        this->setCookie(resultJsonObj, cookieArray);
-        writeToServer(resultJsonObj);
+        QJsonObject json = CookieHandler(webView).setCookies(cookieArray);
+        writeToServer(json);
+    }
+    else if(currentOp == "deleteCookie")
+    {
+        QString url = dataJson.value("url").toString("");
+        QJsonObject json = CookieHandler(webView).deleteCookiesFromUrl(url);
+        writeToServer(json);
     }
     else if(currentOp == "screenshot")
     {
         QString selector = dataJson.value("selector").toString();
-        this->screenshot(selector, resultJsonObj);
-        writeToServer(resultJsonObj);
+        QJsonObject json = ScreenshotHandler(webView).handle(selector);
+        writeToServer(json);
     }
     else if(currentOp == "exec")
     {
-        if(dataJson.contains("extractor"))
-        {
-            QString extractor = dataJson.value("extractor").toString();
-            webView->getWebPage()->getNetworkAccessManager()->setExtractor(extractor);
-        }
-        QString tryCatch("try{%1}catch(err){err.toString();}");
         QString js = dataJson.value("js").toString().toLocal8Bit();
-        QWebSettings::clearMemoryCaches();
-        QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(js));
-        if(val.isNull() || !val.isValid())
-        {
-            resultJsonObj.insert("code", 200);
-            resultJsonObj.insert("desc", "null or undefined");
-            resultJsonObj.insert("data", QJsonValue::Null);
-        }
-        else
-        {
-            resultJsonObj.insert("code", 200);
-            resultJsonObj.insert("desc", "success");
-            resultJsonObj.insert("data", val.toString().replace(QRegExp("[\\s\r\n]"), " "));
-        }
-        writeToServer(resultJsonObj);
+        QJsonObject json = ExecHandler(webView).handle(js);
+        writeToServer(json);
     }
     else if(currentOp == "printPdf")
     {
-        this->printPdf(resultJsonObj);
-        writeToServer(resultJsonObj);
+        QJsonObject json;
+        this->printPdf(json);
+        writeToServer(json);
     }
     else
     {
-        resultJsonObj.insert("code", 400);
-        resultJsonObj.insert("desc", "unknow command");
-        resultJsonObj.insert("data", QJsonValue::Null);
-        writeToServer(resultJsonObj);
+        QJsonObject json;
+        json.insert("code", 400);
+        json.insert("desc", "unknow command");
+        json.insert("data", QJsonValue::Null);
+        writeToServer(json);
     }
 }
 
@@ -239,14 +183,16 @@ void MainWindow::on_webView_titleChanged()
 void MainWindow::on_webView_loadStarted()
 {
     this->progress = 0;
+    this->webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
+    locationEdit->setText(webView->url().toString());
 }
 
 void MainWindow::on_webView_loadFinished()
 {
     this->progress = 100;
-    QString currentUrl = webView->url().toString();
-    locationEdit->setText(currentUrl);
-    webView->setFocus();
+    on_webView_titleChanged();
+    QWebSettings::clearMemoryCaches();
+    locationEdit->setText(webView->url().toString());
 }
 
 void MainWindow::writeToServer(QJsonObject &json)
@@ -256,80 +202,6 @@ void MainWindow::writeToServer(QJsonObject &json)
     QByteArray data = resultJsonDoc.toJson(QJsonDocument::Compact);
     data.append(QString("\r\n"));
     tcpSocket->write(data);
-}
-
-void MainWindow::getCookie(QJsonObject &json)
-{
-    CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
-    QJsonArray cookieArray;
-    QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
-    for(int i = 0; i < cookieList.size(); i ++)
-    {
-        QNetworkCookie cookie = cookieList.at(i);
-        QJsonObject cookieJson;
-        cookieJson.insert("name", QString(cookie.name()));
-        cookieJson.insert("value", QString(cookie.value()));
-        cookieArray.append(cookieJson);
-    }
-    json.insert("code", 200);
-    json.insert("desc", "success");
-    json.insert("data", QJsonValue(cookieArray));
-}
-
-void MainWindow::setCookie(QJsonObject &json, QJsonArray &cookieArray)
-{
-    CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
-    QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
-    for(int i = 0; i < cookieArray.size(); i ++)
-    {
-        QJsonObject cookieObj = cookieArray.at(i).toObject();
-        const QString name = cookieObj.value("name").toString();
-        const QString value = cookieObj.value("value").toString();
-        for(int j = 0; j < cookieList.size(); j ++)
-        {
-            QNetworkCookie originalCookie = cookieList.at(j);
-            if(QString(originalCookie.name()) == name)
-            {
-                originalCookie.setValue(value.toUtf8());
-                cookieJar->updateCookie(originalCookie);
-            }
-        }
-    }
-    json.insert("code", 200);
-    json.insert("desc", "success");
-    json.insert("data", QJsonValue::Null);
-}
-
-void MainWindow::screenshot(const QString &selector, QJsonObject &json)
-{
-    if(selector.isEmpty())
-    {
-        json.insert("code", 400);
-        json.insert("desc", "selector is empty");
-        json.insert("data", QJsonValue::Null);
-        return;
-    }
-    QWebElement imgEle = webView->getWebPage()->mainFrame()->findFirstElement(selector);
-    if(imgEle.isNull())
-    {
-        json.insert("code", 400);
-        json.insert("desc", "not find");
-        json.insert("data", QJsonValue::Null);
-        return;
-    }
-    QImage image(imgEle.geometry().width(), imgEle.geometry().height(), QImage::Format_ARGB32);
-    QPainter painter(&image);
-    imgEle.render(&painter);
-    painter.end();
-    QByteArray bytes;
-    QBuffer buffer(&bytes);
-    buffer.open(QIODevice::WriteOnly);
-    image.save(&buffer, "PNG");
-    QByteArray hexed = bytes.toBase64();
-    buffer.close();
-    json.insert("code", 200);
-    json.insert("desc", "success");
-    json.insert("data", QString(hexed));
 }
 
 void MainWindow::printPdf(QJsonObject &json)
@@ -342,47 +214,4 @@ void MainWindow::printPdf(QJsonObject &json)
     json.insert("code", 200);
     json.insert("desc", "success");
     json.insert("data", QJsonValue::Null);
-}
-
-void MainWindow::extract(const QJsonArray &keys, int count, QJsonObject &json)
-{
-    QMap<QString, int> * extractStatusMap = webView->getWebPage()->getNetworkAccessManager()->getExtractStatusMap();
-    QMap<QString, QByteArray> * extractMap = webView->getWebPage()->getNetworkAccessManager()->getExtractMap();
-    bool ok = true;
-    for(int i = 0; i < keys.size(); i ++)
-    {
-        QString key = keys.at(i).toString();
-        QMap<QString, int>::iterator extractStatusMapIt = extractStatusMap->find(key);
-        if(extractStatusMapIt != extractStatusMap->end()
-                && extractStatusMapIt.value() >= count
-                && extractMap->contains(key))
-        {
-            continue;
-        }
-        ok = false;
-        break;
-    }
-    if(ok)
-    {
-        QJsonArray dataArray;
-        for(int i = 0; i < keys.size(); i ++)
-        {
-            QString key = keys.at(i).toString();
-            QJsonObject dataJson;
-            dataJson.insert(key, QString(extractMap->take(key).toBase64()));
-            dataArray.append(dataJson);
-            extractStatusMap->remove(key);
-            QString blank = "";
-            this->webView->getWebPage()->getNetworkAccessManager()->setExtractor(blank);
-        }
-        json.insert("code", 200);
-        json.insert("desc", "success");
-        json.insert("data", dataArray);
-    }
-    else
-    {
-        json.insert("code", 400);
-        json.insert("desc", "not ok");
-        json.insert("data", QJsonValue::Null);
-    }
 }

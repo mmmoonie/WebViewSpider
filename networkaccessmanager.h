@@ -15,11 +15,8 @@ public:
     explicit NetWorkAccessManager(QObject *parent = 0);
     ~NetWorkAccessManager();
     CookieJar * getCookieJar();
-    void clearAllCookie();
     void setInterceptor(QString &interceptor);
-    void setExtractor(QString &extractor);
     QMap<QString, QByteArray> * getExtractMap();
-    QMap<QString, int> * getExtractStatusMap();
 
 signals:
 
@@ -28,9 +25,7 @@ public slots:
 private:
     CookieJar * cookieJar;
     QString interceptor;
-    QString extractor;
     QMap<QString, QByteArray> * extractMap;
-    QMap<QString, int> * extractStatusMap;
 
 protected:
     QNetworkReply * createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData);

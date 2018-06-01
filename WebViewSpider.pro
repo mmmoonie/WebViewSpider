@@ -19,13 +19,23 @@ SOURCES += main.cpp\
     webview.cpp \
     webpage.cpp \
     networkaccessmanager.cpp \
-    cookiejar.cpp
+    cookiejar.cpp \
+    cookiehandler.cpp \
+    exechandler.cpp \
+    extracthandler.cpp \
+    loadhandler.cpp \
+    screenshothandler.cpp
 
 HEADERS  += mainwindow.h \
     webview.h \
     webpage.h \
     networkaccessmanager.h \
-    cookiejar.h
+    cookiejar.h \
+    cookiehandler.h \
+    exechandler.h \
+    extracthandler.h \
+    loadhandler.h \
+    screenshothandler.h
 
 FORMS    += mainwindow.ui
 
