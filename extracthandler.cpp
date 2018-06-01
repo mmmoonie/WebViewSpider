@@ -20,10 +20,16 @@ QJsonObject ExtractHandler::handle(QJsonArray keys)
         QString key = keys.at(i).toString();
         QMap<QString, QByteArray>::iterator it;
         for(it = dataMap->begin(); it != dataMap->end(); it ++) {
-            if(it.key().contains(QRegExp(key))) {
+            if(it.key().contains(key)) {
                 QJsonObject dataJson;
-                dataJson.insert(key, QString(it.value()));
+                QJsonArray array;
+                QList<QString> values = dataMap->values(it.key());
+                foreach(QString val, values) {
+                    array.append(val);
+                }
+                dataJson.insert(key, array);
                 dataArray.append(dataJson);
+                dataMap->remove(key);
             }
         }
     }
