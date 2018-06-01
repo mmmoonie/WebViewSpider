@@ -45,7 +45,7 @@ WebPage::~WebPage()
 
 void WebPage::javaScriptAlert(QWebFrame *frame, const QString &msg)
 {
-    QWebPage::javaScriptAlert(frame, msg);
+//    QWebPage::javaScriptAlert(frame, msg);
 }
 bool WebPage::javaScriptConfirm(QWebFrame *frame, const QString &msg)
 {
