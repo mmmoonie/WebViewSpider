@@ -112,8 +112,9 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     else if(currentOp == "extract")
     {
-        QJsonArray keys = dataJson.value("extractor").toArray();
-        QJsonObject json = ExtractHandler(webView).handle(keys);
+        QString key = dataJson.value("extractor").toString();
+        int count = dataJson.value("count").toInt(1);
+        QJsonObject json = ExtractHandler(webView).handle(key, count);
         writeToServer(json);
     }
     else if(currentOp == "getCookie")

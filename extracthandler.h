@@ -9,7 +9,7 @@ class ExtractHandler
 {
 public:
     ExtractHandler(WebView * webView = 0);
-    QJsonObject handle(QJsonArray keys);
+    QJsonObject handle(QString key, int count);
     ~ExtractHandler();
 
 private:
