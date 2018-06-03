@@ -3,7 +3,7 @@
 
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
-    extractMap = new QMap<QString, QByteArray>();
+    extractMap = new QMultiMap<QString, QByteArray>();
     cookieJar = new CookieJar;
     setCookieJar(cookieJar);
 }
@@ -33,7 +33,6 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
             data->append(array);
         });
         connect(reply, &QNetworkReply::finished, [=](){
-            qDebug() << path << "finished";
             extractMap->insertMulti(path, (*data).toBase64());
             delete data;
         });
@@ -47,7 +46,7 @@ CookieJar * NetWorkAccessManager::getCookieJar()
     return cookieJar;
 }
 
-QMap<QString, QByteArray> * NetWorkAccessManager::getExtractMap()
+QMultiMap<QString, QByteArray> * NetWorkAccessManager::getExtractMap()
 {
     return this->extractMap;
 }

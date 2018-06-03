@@ -5,7 +5,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QMap>
+#include <QMultiMap>
 #include "cookiejar.h"
 
 class NetWorkAccessManager : public QNetworkAccessManager
@@ -16,7 +16,7 @@ public:
     ~NetWorkAccessManager();
     CookieJar * getCookieJar();
     void setInterceptor(QString &interceptor);
-    QMap<QString, QByteArray> * getExtractMap();
+    QMultiMap<QString, QByteArray> * getExtractMap();
 
 signals:
 
@@ -25,7 +25,7 @@ public slots:
 private:
     CookieJar * cookieJar;
     QString interceptor;
-    QMap<QString, QByteArray> * extractMap;
+    QMultiMap<QString, QByteArray> * extractMap;
 
 protected:
     QNetworkReply * createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData);

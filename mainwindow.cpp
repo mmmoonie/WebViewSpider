@@ -54,8 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(webView->getWebPage()->getNetworkAccessManager(), &QNetworkAccessManager::sslErrors, [=](QNetworkReply* qnr, const QList<QSslError> & errlist){
             qnr->ignoreSslErrors();
         });
-//        webView->load(QUrl("about:blank"));
-        webView->setUrl(QUrl("https://persons.shgjj.com"));
+        webView->load(QUrl("about:blank"));
+//        webView->setUrl(QUrl("https://persons.shgjj.com"));
         setCentralWidget(webView);
 
         QDesktopWidget* desktopWidget = QApplication::desktop();
@@ -115,8 +115,9 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     else if(currentOp == "extract")
     {
-        QJsonArray keys = dataJson.value("extractor").toArray();
-        QJsonObject json = ExtractHandler(webView).handle(keys);
+        QString key = dataJson.value("extractor").toString();
+        int count = dataJson.value("count").toInt(1);
+        QJsonObject json = ExtractHandler(webView).handle(key, count);
         writeToServer(json);
     }
     else if(currentOp == "getCookie")
