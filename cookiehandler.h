@@ -11,7 +11,7 @@ public:
     ~CookieHandler();
     QJsonObject getAllCookies();
     QJsonObject setCookies(QJsonArray &cookieArray);
-    QJsonObject deleteCookiesFromUrl(QString &url);
+    QJsonObject deleteCookiesFromUrl(QString &urlStr);
 
 private:
     WebView * webView = 0;
