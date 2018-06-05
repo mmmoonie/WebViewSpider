@@ -117,6 +117,15 @@ void MainWindow::on_tcpSocket_readyRead()
         QJsonObject json = ExtractHandler(webView).handle(key, count);
         writeToServer(json);
     }
+    else if(currentOp == "clearExtract")
+    {
+        webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
+        QJsonObject json;
+        json.insert("code", 200);
+        json.insert("desc", "success");
+        json.insert("data", QJsonValue::Null);
+        writeToServer(json);
+    }
     else if(currentOp == "getCookie")
     {
         QJsonObject json = CookieHandler(webView).getAllCookies();
