@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
             qnr->ignoreSslErrors();
         });
         webView->load(QUrl("about:blank"));
-//        webView->setUrl(QUrl("https://persons.shgjj.com"));
+        //        webView->setUrl(QUrl("https://persons.shgjj.com"));
         setCentralWidget(webView);
 
         QDesktopWidget* desktopWidget = QApplication::desktop();
@@ -118,6 +118,15 @@ void MainWindow::on_tcpSocket_readyRead()
         QString key = dataJson.value("extractor").toString();
         int count = dataJson.value("count").toInt(1);
         QJsonObject json = ExtractHandler(webView).handle(key, count);
+        writeToServer(json);
+    }
+    else if(currentOp == "clearExtract")
+    {
+        webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
+        QJsonObject json;
+        json.insert("code", 200);
+        json.insert("desc", "success");
+        json.insert("data", QJsonValue::Null);
         writeToServer(json);
     }
     else if(currentOp == "getCookie")
