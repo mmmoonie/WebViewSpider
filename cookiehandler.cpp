@@ -1,5 +1,7 @@
 #include "cookiehandler.h"
 #include <QJsonArray>
+#include <QNetworkCookie>
+#include <cookiejar.h>
 
 CookieHandler::CookieHandler(WebView * webView)
 {
@@ -15,7 +17,7 @@ QJsonObject CookieHandler::getAllCookies()
 {
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
     QJsonArray cookieArray;
-    QList<QNetworkCookie> cookieList = cookieJar->cookiesForUrl(webView->url());
+    QList<QNetworkCookie> cookieList = cookieJar->getCookies(webView->url());
     for(int i = 0; i < cookieList.size(); i ++)
     {
         QNetworkCookie cookie = cookieList.at(i);
@@ -39,6 +41,7 @@ QJsonObject CookieHandler::getAllCookies()
 QJsonObject CookieHandler::setCookies(QJsonArray &cookieArray)
 {
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
+    QList<QNetworkCookie> cookieList;
     for(int i = 0; i < cookieArray.size(); i ++)
     {
         QJsonObject cookieObj = cookieArray.at(i).toObject();
@@ -57,7 +60,8 @@ QJsonObject CookieHandler::setCookies(QJsonArray &cookieArray)
         cookie.setExpirationDate(QDateTime::fromMSecsSinceEpoch(expirationDate));
         cookie.setHttpOnly(httpOnly);
         cookie.setSecure(secure);
-        cookieJar->insertCookie(cookie);
+        cookieList.append(cookie);
+        cookieJar->insertOneCookie(cookie);
     }
     QJsonObject json;
     json.insert("code", 200);
@@ -66,14 +70,19 @@ QJsonObject CookieHandler::setCookies(QJsonArray &cookieArray)
     return json;
 }
 
-QJsonObject CookieHandler::deleteCookiesFromUrl(QString &url)
+QJsonObject CookieHandler::deleteCookiesFromUrl(QString &urlStr)
 {
     QJsonObject json;
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
-    if(url.isEmpty()) {
-        cookieJar->deleteCookiesFromUrl(webView->url());
+    QUrl url;
+    if(urlStr.isNull() || urlStr.isEmpty()) {
+        url = webView->url();
     } else {
-        cookieJar->deleteCookiesFromUrl(QUrl::fromUserInput(url));
+        url = QUrl::fromUserInput(urlStr);
+    }
+    QList<QNetworkCookie> cookieList = cookieJar->cookiesForUrl(url);
+    foreach(QNetworkCookie cookie, cookieList) {
+        cookieJar->deleteCookie(cookie);
     }
     json.insert("code", 200);
     json.insert("desc", "success");
