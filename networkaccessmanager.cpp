@@ -26,6 +26,7 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     QString path = request.url().path();
     if(!path.contains(QRegExp(".*(gif|jpg|png|css|js).*")))
     {
+        qDebug() << path << " will be save ";
         if(reply->bytesAvailable() > 0) {
             extractMap->insertMulti(path, reply->peek(reply->bytesAvailable()).toBase64());
         } else {
