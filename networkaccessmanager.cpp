@@ -26,16 +26,20 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     QString path = request.url().path();
     if(!path.contains(QRegExp(".*(gif|jpg|png|css|js).*")))
     {
-        QByteArray * data = new QByteArray;
-        connect(reply, &QNetworkReply::readyRead, [reply, data](){
-            qint64 size = reply->bytesAvailable();
-            QByteArray array = reply->peek(size);
-            data->append(array);
-        });
-        connect(reply, &QNetworkReply::finished, [=](){
-            extractMap->insertMulti(path, (*data).toBase64());
-            delete data;
-        });
+        if(reply->bytesAvailable() > 0) {
+            extractMap->insertMulti(path, reply->peek(reply->bytesAvailable()).toBase64());
+        } else {
+            QByteArray * data = new QByteArray;
+            connect(reply, &QNetworkReply::readyRead, [reply, data, path](){
+                qint64 size = reply->bytesAvailable();
+                QByteArray array = reply->peek(size);
+                data->append(array);
+            });
+            connect(reply, &QNetworkReply::finished, [=](){
+                extractMap->insertMulti(path, (*data).toBase64());
+                delete data;
+            });
+        }
     }
 
     return reply;
