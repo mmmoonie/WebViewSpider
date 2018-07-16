@@ -42,6 +42,10 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
             });
         }
     }
+    else
+    {
+        qDebug() << path << " will not be save ";
+    }
 
     return reply;
 }
