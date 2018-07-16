@@ -24,7 +24,7 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     }
     QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
     QString path = request.url().path();
-    if(!path.contains(QRegExp(".*(gif|jpg|png|css|js).*")))
+    if(!path.contains(QRegExp(".*(gif|jpg|png|css|js)$")))
     {
         qDebug() << path << " will be save ";
         if(reply->bytesAvailable() > 0) {

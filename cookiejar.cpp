@@ -15,14 +15,14 @@ QList<QNetworkCookie> CookieJar::getCookies(const QUrl &url) const
 {
     QString host = url.host();
     QList<QNetworkCookie> allCookie = allCookies();
-    QList<QNetworkCookie> cookies;
-    foreach(QNetworkCookie cookie, allCookie) {
-        qDebug() << cookie.domain() << cookie.name();
-        if(cookie.domain().contains(host) || host.contains(cookie.domain())) {
-            cookies += cookie;
-        }
-    }
-    return cookies;
+//    QList<QNetworkCookie> cookies;
+//    foreach(QNetworkCookie cookie, allCookie) {
+//        qDebug() << cookie.domain() << cookie.name();
+//        if(cookie.domain().contains(host) || host.contains(cookie.domain())) {
+//            cookies += cookie;
+//        }
+//    }
+    return allCookie;
 }
 
 bool CookieJar::insertOneCookie(const QNetworkCookie &cookie)
