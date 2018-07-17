@@ -17,7 +17,7 @@ QJsonObject CookieHandler::getAllCookies()
 {
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
     QJsonArray cookieArray;
-    QList<QNetworkCookie> cookieList = cookieJar->getCookies(webView->url());
+    QList<QNetworkCookie> cookieList = cookieJar->getAllCookies();
     for(int i = 0; i < cookieList.size(); i ++)
     {
         QNetworkCookie cookie = cookieList.at(i);
