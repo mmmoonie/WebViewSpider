@@ -11,8 +11,9 @@ class CookieJar : public QNetworkCookieJar
 public:
     explicit CookieJar(QObject *parent = 0);
     ~CookieJar();
-    QList<QNetworkCookie> getCookies(const QUrl &url) const;
+    QList<QNetworkCookie> getAllCookies() const;
     bool insertOneCookie(const QNetworkCookie &cookie);
+    QList<QNetworkCookie> cookiesForUrl(const QUrl &url) const;
 
 signals:
 

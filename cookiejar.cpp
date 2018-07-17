@@ -11,10 +11,9 @@ CookieJar::~CookieJar()
 
 }
 
-QList<QNetworkCookie> CookieJar::getCookies(const QUrl &url) const
+QList<QNetworkCookie> CookieJar::getAllCookies() const
 {
-    QList<QNetworkCookie> allCookie = allCookies();
-    return allCookie;
+    return allCookies();
 }
 
 bool CookieJar::insertOneCookie(const QNetworkCookie &cookie)
@@ -22,8 +21,7 @@ bool CookieJar::insertOneCookie(const QNetworkCookie &cookie)
     QList<QNetworkCookie> cookieList = allCookies();
     bool exist = false;
     foreach(QNetworkCookie networkCookie, cookieList) {
-        if((cookie.domain().contains(networkCookie.domain()) || networkCookie.domain().contains(cookie.domain()))
-                && networkCookie.name() == cookie.name()) {
+        if(networkCookie.name() == cookie.name()) {
             exist = true;
             networkCookie.setValue(cookie.value());
             updateCookie(networkCookie);
@@ -35,4 +33,9 @@ bool CookieJar::insertOneCookie(const QNetworkCookie &cookie)
         setAllCookies(cookieList);
     }
     return true;
+}
+
+QList<QNetworkCookie> CookieJar::cookiesForUrl(const QUrl &url) const
+{
+    return allCookies();
 }
