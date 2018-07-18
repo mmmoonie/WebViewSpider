@@ -4,12 +4,15 @@
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
     extractMap = new QMultiMap<QString, QByteArray>();
+    extractors = new QList<QString>();
     cookieJar = new CookieJar;
     setCookieJar(cookieJar);
 }
 
 NetWorkAccessManager::~NetWorkAccessManager()
 {
+    delete extractMap;
+    delete extractors;
     delete cookieJar;
 }
 
@@ -24,7 +27,7 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
     }
     QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
     QString path = request.url().path();
-    if(!path.contains(QRegExp(".*(gif|jpg|png|css|js)$")))
+    if(extractors->contains(path))
     {
         qDebug() << path << " will be save ";
         if(reply->bytesAvailable() > 0) {
@@ -32,11 +35,13 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
         } else {
             QByteArray * data = new QByteArray;
             connect(reply, &QNetworkReply::readyRead, [reply, data, path](){
+                qDebug() << path << " readyRead ";
                 qint64 size = reply->bytesAvailable();
                 QByteArray array = reply->peek(size);
                 data->append(array);
             });
             connect(reply, &QNetworkReply::finished, [=](){
+                qDebug() << path << " finished ";
                 extractMap->insertMulti(path, (*data).toBase64());
                 delete data;
             });
@@ -63,4 +68,9 @@ QMultiMap<QString, QByteArray> * NetWorkAccessManager::getExtractMap()
 void NetWorkAccessManager::setInterceptor(QString &interceptor)
 {
     this->interceptor = interceptor;
+}
+
+QList<QString> * NetWorkAccessManager::getExtractors()
+{
+    return extractors;
 }

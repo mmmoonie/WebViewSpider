@@ -11,6 +11,8 @@ public:
     ExtractHandler(WebView * webView = 0);
     QJsonObject handle(QString key, int count);
     ~ExtractHandler();
+    bool addExtractor(QString &extractor);
+    bool delExtractor(QString &extractor);
 
 private:
     WebView * webView;

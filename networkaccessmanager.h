@@ -17,6 +17,7 @@ public:
     CookieJar * getCookieJar();
     void setInterceptor(QString &interceptor);
     QMultiMap<QString, QByteArray> * getExtractMap();
+    QList<QString> * getExtractors();
 
 signals:
 
@@ -26,6 +27,8 @@ private:
     CookieJar * cookieJar;
     QString interceptor;
     QMultiMap<QString, QByteArray> * extractMap;
+    QList<QString> * extractors;
+
 
 protected:
     QNetworkReply * createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData);

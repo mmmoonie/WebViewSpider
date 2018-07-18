@@ -29,3 +29,31 @@ QJsonObject ExtractHandler::handle(QString key, int count)
     return json;
 
 }
+
+bool ExtractHandler::addExtractor(QString &extractor)
+{
+    if(extractor.isNull() || extractor.isEmpty()) {
+        return false;
+    }
+    NetWorkAccessManager * accessManager = webView->getWebPage()->getNetworkAccessManager();
+    QList<QString> *extractors = accessManager->getExtractors();
+    if(extractors->contains(extractor)) {
+        return false;
+    }
+    extractors->append(extractor);
+    return true;
+}
+
+bool ExtractHandler::delExtractor(QString &extractor)
+{
+    if(extractor.isNull() || extractor.isEmpty()) {
+        return false;
+    }
+    NetWorkAccessManager * accessManager = webView->getWebPage()->getNetworkAccessManager();
+    QList<QString> *extractors = accessManager->getExtractors();
+    if(!extractors->contains(extractor)) {
+        return false;
+    }
+    extractors->removeAll(extractor);
+    return true;
+}
