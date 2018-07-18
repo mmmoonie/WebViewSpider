@@ -117,6 +117,15 @@ void MainWindow::on_tcpSocket_readyRead()
         QJsonObject json = ExtractHandler(webView).handle(key, count);
         writeToServer(json);
     }
+    else if(currentOp == "addExtractor") {
+        QString extractor = dataJson.value("extractor").toString();
+        bool flag = ExtractHandler(webView).addExtractor(extractor);
+        QJsonObject json;
+        json.insert("code", 200);
+        json.insert("desc", "success");
+        json.insert("data", flag);
+        writeToServer(json);
+    }
     else if(currentOp == "clearExtract")
     {
         webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
