@@ -13,7 +13,6 @@ public:
     ~CookieJar();
     QList<QNetworkCookie> getAllCookies() const;
     bool insertOneCookie(const QNetworkCookie &cookie);
-    QList<QNetworkCookie> cookiesForUrl(const QUrl &url) const;
 
 signals:
 
