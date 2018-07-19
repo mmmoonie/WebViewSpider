@@ -34,8 +34,3 @@ bool CookieJar::insertOneCookie(const QNetworkCookie &cookie)
     }
     return true;
 }
-
-QList<QNetworkCookie> CookieJar::cookiesForUrl(const QUrl &url) const
-{
-    return allCookies();
-}
