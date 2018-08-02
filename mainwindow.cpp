@@ -160,7 +160,7 @@ void MainWindow::on_tcpSocket_readyRead()
     }
     else if(currentOp == "exec")
     {
-        QString js = dataJson.value("js").toString().toLocal8Bit();
+        QString js = dataJson.value("js").toString();
         QJsonObject json = ExecHandler(webView).handle(js);
         writeToServer(json);
     }
