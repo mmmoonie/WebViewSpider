@@ -55,7 +55,6 @@ MainWindow::MainWindow(QWidget *parent) :
             qnr->ignoreSslErrors();
         });
         webView->load(QUrl("about:blank"));
-        //        webView->setUrl(QUrl("https://persons.shgjj.com"));
         setCentralWidget(webView);
 
         QDesktopWidget* desktopWidget = QApplication::desktop();
@@ -138,21 +137,20 @@ void MainWindow::on_tcpSocket_readyRead()
         json.insert("data", QJsonValue::Null);
         writeToServer(json);
     }
-    else if(currentOp == "getCookie")
+    else if(currentOp == "getAllCookie")
     {
         QJsonObject json = CookieHandler(webView).getAllCookies();
         writeToServer(json);
     }
-    else if(currentOp == "setCookie")
+    else if(currentOp == "addCookie")
     {
         QJsonArray cookieArray = dataJson.value("cookies").toArray();
-        QJsonObject json = CookieHandler(webView).setCookies(cookieArray);
+        QJsonObject json = CookieHandler(webView).addCookies(cookieArray);
         writeToServer(json);
     }
-    else if(currentOp == "deleteCookie")
+    else if(currentOp == "deleteAllCookie")
     {
-        QString url = dataJson.value("url").toString("");
-        QJsonObject json = CookieHandler(webView).deleteCookiesFromUrl(url);
+        QJsonObject json = CookieHandler(webView).deleteAllCookies();
         writeToServer(json);
     }
     else if(currentOp == "screenshot")
