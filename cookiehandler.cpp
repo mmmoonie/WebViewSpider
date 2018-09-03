@@ -40,16 +40,32 @@ QJsonObject CookieHandler::getAllCookies()
 
 QJsonObject CookieHandler::addCookies(QJsonArray &cookieArray)
 {
+    CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
     for(int i = 0; i < cookieArray.size(); i ++)
     {
         QJsonObject cookieObj = cookieArray.at(i).toObject();
         QString name = cookieObj.value("name").toString("");
         QString value = cookieObj.value("value").toString("");
-        if(name.isEmpty() || value.isEmpty()) {
-            continue;
+        bool httpOnly = cookieObj.value("httpOnly").toBool(false);
+        bool secure = cookieObj.value("secure").toBool(false);
+        QString domain = cookieObj.value("domain").toString();
+        QString path = cookieObj.value("path").toString("/");
+        long expirationDate = (long) cookieObj.value("expirationDate").toDouble();
+        QNetworkCookie cookie;
+        cookie.setName(name.toUtf8());
+        cookie.setValue(value.toUtf8());
+        cookie.setDomain(domain);
+        cookie.setHttpOnly(httpOnly);
+        cookie.setPath(path);
+        if(httpOnly) {
+            cookieJar->insertCookie(cookie);
+        } else {
+            if(name.isEmpty() || value.isEmpty()) {
+                continue;
+            }
+            QString addCookieJs("document.cookie='%1=%2'");
+            webView->getWebPage()->mainFrame()->evaluateJavaScript(addCookieJs.arg(name).arg(value));
         }
-        QString addCookieJs("document.cookie='%1=%2'");
-        webView->getWebPage()->mainFrame()->evaluateJavaScript(addCookieJs.arg(name).arg(value));
     }
     QJsonObject json;
     json.insert("code", 200);
