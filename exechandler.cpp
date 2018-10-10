@@ -13,7 +13,7 @@ ExecHandler::~ExecHandler()
 QJsonObject ExecHandler::handle(QString &javaScript)
 {
     QString tryCatch("try{%1}catch(err){err.toString();}");
-    this->webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
+//    this->webView->getWebPage()->getNetworkAccessManager()->getExtractMap()->clear();
     QVariant val = webView->getWebPage()->mainFrame()->evaluateJavaScript(tryCatch.arg(javaScript));
     QJsonObject json;
     if(val.isNull() || !val.isValid())
