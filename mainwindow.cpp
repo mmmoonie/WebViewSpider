@@ -217,7 +217,7 @@ void MainWindow::on_webView_loadFinished()
 {
     this->progress = 100;
     on_webView_titleChanged();
-    QWebSettings::clearMemoryCaches();
+//    QWebSettings::clearMemoryCaches();
     locationEdit->setText(webView->url().toString());
 }
 

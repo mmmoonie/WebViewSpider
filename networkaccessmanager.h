@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QMultiMap>
+#include <QNetworkDiskCache>
 #include "cookiejar.h"
 
 class NetWorkAccessManager : public QNetworkAccessManager
@@ -28,7 +29,7 @@ private:
     QString interceptor;
     QMultiMap<QString, QByteArray> * extractMap;
     QList<QString> * extractors;
-
+    QNetworkDiskCache* diskCache;
 
 protected:
     QNetworkReply * createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData);

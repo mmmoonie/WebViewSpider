@@ -1,5 +1,6 @@
 #include "networkaccessmanager.h"
 #include <QRegExp>
+#include <QStandardPaths>
 
 NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessManager(parent)
 {
@@ -7,6 +8,11 @@ NetWorkAccessManager::NetWorkAccessManager(QObject *parent) : QNetworkAccessMana
     extractors = new QList<QString>();
     cookieJar = new CookieJar;
     setCookieJar(cookieJar);
+    diskCache = new QNetworkDiskCache(this);
+    QString cachePath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    diskCache->setCacheDirectory(cachePath);
+    diskCache->setMaximumCacheSize(10 * 1024 * 1024);
+    this->setCache(diskCache);
 }
 
 NetWorkAccessManager::~NetWorkAccessManager()
@@ -25,8 +31,10 @@ QNetworkReply * NetWorkAccessManager::createRequest(Operation op, const QNetwork
         req.setUrl(QUrl(""));
         return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
-    QNetworkReply * reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
-    QString path = request.url().path();
+    QNetworkRequest req(request);
+    req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+    QNetworkReply * reply = QNetworkAccessManager::createRequest(op, req, outgoingData);
+    QString path = req.url().path();
     if(extractors->contains(path))
     {
         qDebug() << path << " will be save ";
