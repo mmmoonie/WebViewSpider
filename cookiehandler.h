@@ -10,6 +10,7 @@ public:
     CookieHandler(WebView * webView);
     ~CookieHandler();
     QJsonObject getAllCookies();
+    QJsonObject insertCookies(QJsonArray& cookieArray, QUrl &url);
     QJsonObject addCookies(QJsonArray &cookieArray);
     QJsonObject deleteAllCookies();
 

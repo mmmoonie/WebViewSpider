@@ -12,11 +12,15 @@ public:
     explicit CookieJar(QObject *parent = 0);
     ~CookieJar();
     QList<QNetworkCookie> getAllCookies() const;
-    bool insertOneCookie(const QNetworkCookie &cookie);
 
-signals:
+public:
+    QList<QNetworkCookie> cookies(const QUrl &url) const;
+    bool addCookie(const QNetworkCookie &cookie, const QUrl &url);
+    virtual bool setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url) Q_DECL_OVERRIDE;
 
 public slots:
+    void clearCookies();
+    bool deleteCookie(const QNetworkCookie &cookie) Q_DECL_OVERRIDE;
 
 };
 
