@@ -146,6 +146,13 @@ void MainWindow::on_tcpSocket_readyRead()
         QJsonObject json = CookieHandler(webView).addCookies(cookieArray);
         writeToServer(json);
     }
+    else if(currentOp == "insertCookie")
+    {
+        QJsonArray cookieArray = dataJson.value("cookies").toArray();
+        QUrl url = QUrl::fromUserInput(dataJson.value("url").toString(""));
+        QJsonObject json = CookieHandler(webView).insertCookies(cookieArray, url);
+        writeToServer(json);
+    }
     else if(currentOp == "deleteAllCookie")
     {
         QJsonObject json = CookieHandler(webView).deleteAllCookies();

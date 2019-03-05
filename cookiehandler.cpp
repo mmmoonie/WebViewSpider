@@ -38,6 +38,33 @@ QJsonObject CookieHandler::getAllCookies()
     return json;
 }
 
+QJsonObject CookieHandler::insertCookies(QJsonArray &cookieArray, QUrl &url) {
+    CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
+    for(int i = 0; i < cookieArray.size(); i ++)
+    {
+        QJsonObject cookieObj = cookieArray.at(i).toObject();
+        QString name = cookieObj.value("name").toString("");
+        QString value = cookieObj.value("value").toString("");
+        bool httpOnly = cookieObj.value("httpOnly").toBool(false);
+        bool secure = cookieObj.value("secure").toBool(false);
+        QString domain = cookieObj.value("domain").toString();
+        QString path = cookieObj.value("path").toString("/");
+        long expirationDate = (long) cookieObj.value("expirationDate").toDouble();
+        QNetworkCookie cookie;
+        cookie.setName(name.toUtf8());
+        cookie.setValue(value.toUtf8());
+        cookie.setDomain(domain);
+        cookie.setHttpOnly(httpOnly);
+        cookie.setPath(path);
+        cookieJar->addCookie(cookie, url);
+    }
+    QJsonObject json;
+    json.insert("code", 200);
+    json.insert("desc", "success");
+    json.insert("data", QJsonValue::Null);
+    return json;
+}
+
 QJsonObject CookieHandler::addCookies(QJsonArray &cookieArray)
 {
     CookieJar * cookieJar = webView->getWebPage()->getNetworkAccessManager()->getCookieJar();
